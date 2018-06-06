@@ -1,4 +1,5 @@
 #include <server.h>
+#include <dataStructDefault.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -9,6 +10,7 @@
 // '0' stands for IP
 // Check out /etc/protocol
 #define PROTOCOL 0
+
 
 int main(int argc, char * const argv[]) {
 
@@ -24,14 +26,33 @@ int main(int argc, char * const argv[]) {
 		ERROR_EXIT("Failed to listen for connections");
 
 	// Create client socket
-	int new_socket=accept(s->fd, NULL, NULL);
-	if (new_socket==-1)
+	int new_socket = accept(s->fd, NULL, NULL);
+	if (new_socket == -1) {
 		ERROR_EXIT("Failed to accept client");
+	} else {
+		printf("Connection accepted.\n");
+	}
 
 	// Application goes here
-	// ......
-	send(new_socket, "Hello Theodora", 15*sizeof(char), 0);
-	
+	// ......	
+	data_unit msg;
+	do {
+		printf("Digite a mensagem a ser enviada para o cliente\n");
+		scanf("%s%*c", msg.description);	
+		msg.id = MESSAGE;
+
+		/* Enviando a msg para o cliente. */
+		send(new_socket, &msg, sizeof(msg), 0);
+
+		/* Recebendo a msg do cliente. */
+		if(recv(new_socket, &msg, sizeof(msg), 0) == -1){
+			printf("Error on receiving data from client\n");
+			exit(EXIT_FAILURE);
+		} else {
+			printf("Client response: %s \n", msg.description);
+		}
+	} while(msg.id != EXIT);
+		
 	// Destroy server structure
 	destroy_server(s);
 

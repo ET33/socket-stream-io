@@ -5,15 +5,16 @@
 #include <string.h>
 #include <server.h>
 #include <sys/socket.h>
+#include <dataStructDefault.h>
 
 server * create_server(unsigned int buffer_size, unsigned short int port, int server_type, int protocol) {
 	server *s = malloc(sizeof(server));
 	if (s == NULL)
 		ERROR_EXIT("Failed to init server structure");
 
-       s->buffer = malloc(sizeof(char) * buffer_size);
-        if (s->buffer == NULL)
-                ERROR_EXIT("Failed to init buffer");
+	s->buffer = malloc(sizeof(char) * buffer_size);
+	if (s->buffer == NULL)
+    	ERROR_EXIT("Failed to init buffer");
 	
 	// Create server file descriptor
 	s->fd=socket(server_type, SOCK_STREAM, protocol);
