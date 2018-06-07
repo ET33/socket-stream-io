@@ -13,21 +13,22 @@
 #define ERROR_EXIT(STR) {perror(STR); exit(EXIT_FAILURE);}
 
 typedef struct {
-	int fd;
-	struct sockaddr_in address;
-	char *buffer;
+    int fd;
+    struct sockaddr_in address;
+    char *buffer;
 } server;
 
 server * create_server(
-	unsigned int buffer_size, 
-	unsigned short int port, 
-	int server_type, 
-	int protocol
+    unsigned int buffer_size, 
+    unsigned short int port, 
+    int server_type, 
+    int protocol
 );
 
 int attach_server(
-	server * s, 
-	unsigned short int port);
+    server * s, 
+    unsigned short int port
+);
 
 void destroy_server(server * s);
 
