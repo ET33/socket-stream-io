@@ -91,6 +91,9 @@ int main(int argc, char * const argv[]) {
 	}
 	} while(msg.id != EXIT);
 
+	// Free host IP memory
+	if (host)
+		free(host);
 	// Destroy server structure
 	destroy_server(s);
 

@@ -70,15 +70,16 @@ int attach_server(server * s, unsigned short int port) {
     return 1;
 }
 
-void destroy_server(server * s) {
-    if (s) {
-        close(s->fd);
+void destroy_server(server *s) {
+	// Free memory allocated for all server structure
+	if (s) {
+		close(s->fd);
 
-        if (s->buffer)
-            free(s->buffer);
-            
-        free(s);
-    }
+		if (s->buffer)
+			free(s->buffer);
+		    
+		free(s);
+	}
 }
 
 char *getIP() {
