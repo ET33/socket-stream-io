@@ -18,18 +18,8 @@ typedef struct {
     char *buffer;
 } server;
 
-server * create_server(
-    unsigned int buffer_size, 
-    unsigned short int port, 
-    int server_type, 
-    int protocol
-);
-
-int attach_server(
-    server * s, 
-    unsigned short int port
-);
-
+server *create_server(unsigned int buffer_size, unsigned short int port, int server_type, int protocol, char *ip_address);
+int attach_server(server * s, unsigned short int port);
 void destroy_server(server * s);
 
 #endif

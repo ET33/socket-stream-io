@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -17,6 +18,10 @@
 */
 
 int main(int argc, char * const argv[]){
+    if(argc != 3) {
+        printf("Usage: %s IP_ADDRESS PORT\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
     // Criando socket
     int socket_client = socket(AF_INET, SOCK_STREAM, 0);
@@ -28,8 +33,8 @@ int main(int argc, char * const argv[]){
     //especificando endereco do servidor
     struct sockaddr_in server_adress;
     server_adress.sin_family = AF_INET;
-    server_adress.sin_port = htons(PORT);
-    server_adress.sin_addr.s_addr = INADDR_ANY;
+    server_adress.sin_port = htons(atoi(argv[2]));
+    server_adress.sin_addr.s_addr = inet_addr(argv[1]);
 
     // estabelece conexao com o socket server
     int connection_status = connect(socket_client,
@@ -55,7 +60,7 @@ int main(int argc, char * const argv[]){
         }
         
         printf("Digite a mensagem a ser enviada para o servidor\n");
-        scanf("%s%*c", msg.description);
+        scanf("%[^\n]%*c", msg.description);
         msg.id = MESSAGE;
 
         /* Enviando msg para o servidor. */

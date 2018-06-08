@@ -5,11 +5,10 @@
 #include <string.h>
 #include <server.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <dataStructDefault.h>
 
-server * create_server(unsigned int buffer_size, unsigned short int port,
-                       int server_type, int protocol) {
-
+server *create_server(unsigned int buffer_size, unsigned short int port, int server_type, int protocol, char *ip_address) {
     server * s = malloc(sizeof(server));
     if (s == NULL)
         ERROR_EXIT("Failed to init server structure");
@@ -33,7 +32,7 @@ server * create_server(unsigned int buffer_size, unsigned short int port,
 
     // Define the server address
     s->address.sin_family = server_type;
-    s->address.sin_addr.s_addr = INADDR_ANY;
+    s->address.sin_addr.s_addr = inet_addr(ip_address);
     s->address.sin_port = htons(port);
 
     return s;
