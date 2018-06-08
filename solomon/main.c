@@ -78,7 +78,7 @@ int main(int argc, char * const argv[]) {
     // ......	
     data_unit msg;
     do {
-        printf("Digite a mensagem a ser enviada para o cliente\n");
+        printf("Server response: ");
         scanf("%[^\n]%*c", msg.description);	
         msg.id = MESSAGE;
 
