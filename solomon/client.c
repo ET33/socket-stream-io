@@ -27,7 +27,7 @@
 
 int main(int argc, char * const argv[]){
     if(argc != 3) {
-        printf("Usage: %s IP_ADDRESS PORT\n", argv[0]);
+        printf(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
         exit(EXIT_FAILURE);
     }
 

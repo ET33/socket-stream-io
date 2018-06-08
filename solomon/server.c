@@ -8,14 +8,22 @@
 #include <arpa/inet.h>
 #include <dataStructDefault.h>
 
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 server *create_server(unsigned int buffer_size, unsigned short int port, int server_type, int protocol, char *ip_address) {
     server * s = malloc(sizeof(server));
     if (s == NULL)
-        ERROR_EXIT("Failed to init server structure");
+        ERROR_EXIT(ANSI_COLOR_RED "Failed to init server structure" ANSI_COLOR_RESET);
 
     s->buffer = malloc(sizeof(char) * buffer_size);
     if (s->buffer == NULL)
-        ERROR_EXIT("Failed to init buffer");
+        ERROR_EXIT(ANSI_COLOR_RED "Failed to init buffer" ANSI_COLOR_RESET);
     
     // Create server file descriptor
     s->fd = socket(server_type, SOCK_STREAM, protocol);
@@ -28,7 +36,7 @@ server *create_server(unsigned int buffer_size, unsigned short int port, int ser
                          &aux,
                          sizeof(aux));
     if (ret)
-        ERROR_EXIT("Failed at server configuration");
+        ERROR_EXIT(ANSI_COLOR_RED "Failed at server configuration" ANSI_COLOR_RESET);
 
     // Define the server address
     s->address.sin_family = server_type;
@@ -50,7 +58,7 @@ int attach_server(server * s, unsigned short int port) {
     // From man: "On success, zero is returned.  
     // On error, -1 is returned, and errno is set appropriately. "
     if (ret)
-        ERROR_EXIT("Failed to bind server to specified PORT.");
+        ERROR_EXIT(ANSI_COLOR_RED "Failed to bind server to specified PORT." ANSI_COLOR_RESET);
 
     return 1;
 }
