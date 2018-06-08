@@ -53,7 +53,7 @@ int main(int argc, char * const argv[]){
         printf(ANSI_COLOR_RED "Failed to connect to server." ANSI_COLOR_RESET);
         exit(EXIT_FAILURE);
     } else {
-        printf(ANSI_COLOR_GREEN "Conexão estabelecida com o servidor.\n" ANSI_COLOR_RESET);
+        printf(ANSI_COLOR_GREEN "Connection established with the server %s on %s...\n" ANSI_COLOR_RESET, argv[1], argv[2]);
     }
 
     // Application goes here
