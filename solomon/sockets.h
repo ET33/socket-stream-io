@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 /* There's also "data-struct-def.h" included
 below because it depends on the BUFFER_SIZE
 define constant. */
@@ -32,7 +33,7 @@ define constant. */
 #define ANSI_COLOR_RESET	"\x1b[0m"
 
 typedef struct {
-    int fd;
+    int fd, target_fd;
     struct sockaddr_in address;
     char *buffer;
 } socket_structure;

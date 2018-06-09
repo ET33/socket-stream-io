@@ -1,4 +1,4 @@
-CFLAGS= -Wall
+CFLAGS= -Wall -lpthread
 all: clean sources
 	@gcc sockets.o client.o -o client $(CFLAGS)
 	@gcc sockets.o server.o -o server $(CFLAGS)
