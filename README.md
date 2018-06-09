@@ -1,25 +1,50 @@
-     ,-----.,--.                  ,--. ,---.   ,--.,------.  ,------.
-    '  .--./|  | ,---. ,--.,--. ,-|  || o   \  |  ||  .-.  \ |  .---'
-    |  |    |  || .-. ||  ||  |' .-. |`..'  |  |  ||  |  \  :|  `--, 
-    '  '--'\|  |' '-' ''  ''  '\ `-' | .'  /   |  ||  '--'  /|  `---.
-     `-----'`--' `---'  `----'  `---'  `--'    `--'`-------' `------'
-    ----------------------------------------------------------------- 
+      ______     ______     __         ______     __    __     ______     __   __    
+     /\  ___\   /\  __ \   /\ \       /\  __ \   /\ "-./  \   /\  __ \   /\ "-.\ \   
+     \ \___  \  \ \ \/\ \  \ \ \____  \ \ \/\ \  \ \ \-./\ \  \ \ \/\ \  \ \ \-.  \  
+      \/\_____\  \ \_____\  \ \_____\  \ \_____\  \ \_\ \ \_\  \ \_____\  \ \_\\"\_\ 
+       \/_____/   \/_____/   \/_____/   \/_____/   \/_/  \/_/   \/_____/   \/_/ \/_/ 
 
+     ------------------------------------------------------------------------------
 
-# Hi there! Welcome to Cloud9 IDE!
+# A Socket Stream Application
+Solomon nada mais é do que uma aplicação de sockets em C que faz streaming de áudio entre um cliente e um servidor.
 
-To get you started, we included a small hello world application.
+## Minimum Viable Product (MVP)
+Para o MVP algumas funcionalidaes devem ser implementadas, dentre elas temos:
 
-1) Open the hello-world.html file
+No lado do cliente:
+- Se conectar a um servidor;
+- Listar músicas disponíveis no servidor com um determinado número na frente para facilitar escolha;
+     - Exemplo: [1] Toto - Africa;
+- Dar play em alguma música;
+- Dar stop no player;
+- Tocar as músicas e não travar a interface de comunicação com o servidor;
+- Fechar o player e sair da aplicação.
 
-2) Click on the Preview button to open a live preview pane
+No lado do servidor:
+- Aceitar conexão de um cliente;
+- Prover interface de comandos para o cliente;
+- Permitir escolher o caminho das músicas;
+- Enviar as músicas para o cliente em forma de streaming.
 
-3) Make some changes to the file, save, watch the preview, and have fun!
+## Expansion Pack
+Algumas funcionalidades a mais que podem ser implementadas caso tenhamos tempo:
 
-Happy coding!
-The Cloud9 IDE team
+No lado do cliente:
+- Dar pause na música;
+- Dar next na música;
+- Dar previous na música;
+- Shuffle;
+- Repeat once;
+- Possibilidade de reconexão ao servidor após encerramento do cliente.
 
-## Support & Documentation
-
-Visit http://docs.c9.io for documentation, or http://support.c9.io for support.
-To watch some training videos, visit http://www.youtube.com/user/c9ide
+No lado do servidor:
+- Prover interface que aceite os novos comandos do cliente;
+- Permitir múltiplas conexões de clientes;
+- Listar número de clientes conectados;
+- Manter o servidor sempre ativo, independente de ter cliente ou não;
+     - O administrador do servidor daria o comando EXIT para encerrar o servidor;
+     - Um limite máximo de conexões pode ser estabelecido, exemplo: 10 conexões;
+     - O servidor teria uma lista de conexões ativas e disponíveis;
+          - A cada nova conexão o contador seria incrementado até chegar ao limite;
+          - Caso um cliente se desconecte, o servidor liberaria a conexão para outro cliente.
