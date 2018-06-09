@@ -2,10 +2,11 @@
 #define __SERVER_H_
 
 // Include section
-#include <netdb.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +15,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "data-struct-def.h"
-
 
 // Define and typedef section
 #define ERROR_EXIT(STR) ({perror(STR); exit(EXIT_FAILURE);})
@@ -35,7 +35,6 @@ typedef struct {
     struct sockaddr_in address;
     char *buffer;
 } server;
-
 
 // Function declaration section
 server *create_server(

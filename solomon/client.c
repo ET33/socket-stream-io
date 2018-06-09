@@ -26,8 +26,10 @@ void *talk(void *arguments) {
     do {
         printf(ANSI_COLOR_RED "Your message: " ANSI_COLOR_RESET);
         scanf("%[^\n]%*c", msg.description);	
-        send(client_socket->fd, &msg, sizeof(msg), 0);
-        *msg.description = '\0';
+        if (strcmp(msg.description, "\n") != 0) {
+            send(client_socket->fd, &msg, sizeof(msg), 0);
+            *msg.description = '\0';
+        }
     } while (1);
 
     return NULL;
@@ -48,13 +50,22 @@ int main(int argc, char * const argv[]){
 
     printf("server socket: %d\n target_socket: %d\n", client_socket->fd, client_socket->target_fd);
 
+<<<<<<< HEAD
     /* Application section. */
     pthread_t talk_thread, hear_thread;
+=======
+    pthread_t talk_thread,
+              hear_thread;
+>>>>>>> Try sockets with threads
 
     pthread_create(&talk_thread, NULL, talk, &client_socket);
     pthread_create(&hear_thread, NULL, hear, &client_socket->fd);
 
+<<<<<<< HEAD
     pthread_join(talk_thread, NULL);
+=======
+    pthread_join(hear_thread, NULL);
+>>>>>>> Try sockets with threads
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
