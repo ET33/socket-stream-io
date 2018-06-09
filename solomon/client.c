@@ -1,41 +1,22 @@
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <dataStructDefault.h>
-
-#define BUFFER_SIZE 1024
-#define PORT 8080
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
-/*	Client Socket Workflow
-    1. Socket;
-    2. Connect;
-    3. Send/Receive Message;
-    4. Close Connection.
-*/
+#include "server.h"
 
 int main(int argc, char * const argv[]){
     if(argc != 3) {
-        printf(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
+        printf(
+		ANSI_COLOR_YELLOW 
+		"Usage: %s IP_ADDRESS PORT\n" 
+		ANSI_COLOR_RESET, 
+		argv[0]);
         exit(EXIT_FAILURE);
     }
 
     // Criando socket
-    int socket_client = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_client == -1) {
-        printf(ANSI_COLOR_RED "Failed to create Socket\n" ANSI_COLOR_RESET);
-        exit(EXIT_FAILURE);
+    int socket_client;
+    if ((socket_client = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        ERROR_EXIT(
+		ANSI_COLOR_RED 
+		"Failed to create Socket" 
+		ANSI_COLOR_RESET);
     }
 
     //especificando endereco do servidor
@@ -50,24 +31,38 @@ int main(int argc, char * const argv[]){
                                     sizeof(server_adress));
 
     if (connection_status) {
-        printf(ANSI_COLOR_RED "Failed to connect to server." ANSI_COLOR_RESET);
-        exit(EXIT_FAILURE);
+        ERROR_EXIT (ANSI_COLOR_RED 
+		"Failed to connect to server."
+		ANSI_COLOR_RESET);
     } else {
-        printf(ANSI_COLOR_GREEN "Connection established with the server %s on %s...\n" ANSI_COLOR_RESET, argv[1], argv[2]);
+        printf(	ANSI_COLOR_GREEN 
+		"Connection established with the "
+		"server %s on %s...\n" 
+		ANSI_COLOR_RESET, 
+		argv[1], argv[2]);
     }
 
     // Application goes here
-    // ......	
     data_unit msg;
     do {
         if (recv(socket_client, &msg, sizeof(msg), 0) == -1) {
-            printf(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
-            exit(EXIT_FAILURE);
+            ERROR_EXIT(
+		ANSI_COLOR_RED 
+		"Error on receiving data from server\n" 
+		ANSI_COLOR_RESET);
         } else {
-            printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s \n", msg.description);
+            printf(
+		ANSI_COLOR_BLUE 
+		"Server response:" 
+		ANSI_COLOR_RESET " %s\n", 
+		msg.description);
         }
         
-        printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
+        printf(
+		ANSI_COLOR_MAGENTA 
+		"Client response: " 
+		ANSI_COLOR_RESET);
+
         scanf("%[^\n]%*c", msg.description);
         msg.id = MESSAGE;
 
