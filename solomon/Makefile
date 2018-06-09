@@ -1,12 +1,9 @@
 CFLAGS= -Wall
-all: clean server.o client.o main.o
+all: clean sources
 	@gcc client.o -o client $(CFLAGS)
 	@gcc server.o main.o -o server $(CFLAGS)
-server.o:	
-	@gcc -c server.c $(CFLAGS)
-
-client.o:
-	@gcc -c client.c $(CFLAGS)
+sources:	
+	@gcc -c *.c $(CFLAGS)
 
 clean:
 	@rm -rf *.o server client solomon.zip 
@@ -18,6 +15,3 @@ zip:
 run:
 	@./server &
 	@./client
-
-main.o:
-	@gcc -c main.c $(CFLAGS)
