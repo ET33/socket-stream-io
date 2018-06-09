@@ -1,5 +1,5 @@
-#ifndef __SERVER_RD_H_
-#define __SERVER_RD_H_
+#ifndef __SERVER_H_
+#define __SERVER_H_
 
 // Include section
 #include <netdb.h>
@@ -13,7 +13,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "data-struct-def.h"
-
 
 
 // Define and typedef section
@@ -37,8 +36,6 @@ typedef struct {
 } server;
 
 
-
-
 // Function declaration section
 server *create_server(
 	unsigned int buffer_size, 
@@ -48,10 +45,10 @@ server *create_server(
 	char *ip_address);
 
 int attach_server(
-	server * s, 
+	server *s, 
 	unsigned short int port);
 
-void destroy_server(server * s);
+void destroy_server(server *s);
 
 char *getIP();
 
