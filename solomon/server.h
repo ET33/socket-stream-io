@@ -12,8 +12,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "data-struct-def.h"
-
+// There's also "data-struct-def.h" included
+// below because it depends on the BUFFER_SIZE
+// define constant.
 
 // Define and typedef section
 #define ERROR_EXIT(STR) ({perror(STR); exit(EXIT_FAILURE);})
@@ -35,6 +36,10 @@ typedef struct {
     char *buffer;
 } server;
 
+// Included this lib here because it needs
+// to known the BUFFER_SIZE in order to work
+// correctly
+#include "data-struct-def.h"
 
 // Function declaration section
 server *create_server(
