@@ -16,7 +16,7 @@ clean:
 
 zip:
 	@rm -rf solomon.zip
-	@zip solomon.zip *.c *.h 
+	@zip solomon.zip *.c *.h Makefile
 
 run:
 	@./server &
