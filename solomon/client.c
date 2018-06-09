@@ -1,4 +1,5 @@
 #include "server.h"
+#include "queue.h"
 
 int main(int argc, char * const argv[]){
     if(argc != 3) {

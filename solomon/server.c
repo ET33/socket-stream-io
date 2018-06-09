@@ -1,4 +1,5 @@
 #include "server.h"
+#include "queue.h"
 
 server *create_server(
 	unsigned int buffer_size, 

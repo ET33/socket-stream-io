@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "queue.h"
 
 typedef struct node {
 	struct node *next_n;
@@ -7,11 +8,11 @@ typedef struct node {
 	void *item;
 } node;
 
-typedef struct queue {
+struct queue {
 	node *first_n;
 	node *last_n;
 	unsigned int size;
-} queue;
+};
 
 queue *q_init() {
 	queue *q = malloc(sizeof(queue));
@@ -120,6 +121,8 @@ void *q_pop(queue *q) {
 
 
 // Queue debug
+
+/*
 #include <time.h>
 int main(int argc, char * argv[]) {
 	printf("Initing test...\n");
@@ -150,3 +153,4 @@ int main(int argc, char * argv[]) {
 	q_destroy(q);
 	return 0;
 }
+*/
