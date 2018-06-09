@@ -37,7 +37,7 @@ int main(int argc, char * const argv[]){
     } else {
         printf(	ANSI_COLOR_GREEN 
 		"Connection established with the "
-		"server %s on %s...\n" 
+		"server %s on port %s...\n" 
 		ANSI_COLOR_RESET, 
 		argv[1], argv[2]);
     }
