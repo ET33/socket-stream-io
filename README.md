@@ -34,17 +34,21 @@ No lado do cliente:
 - Dar pause na música;
 - Dar next na música;
 - Dar previous na música;
-- Shuffle;
-- Repeat once;
+- Shuffle na playlist;
+- Repeat once na playlist;
+- Replay na música;
+- Repeat na plasylist;
+- Permitir que o cliente veja o nome da música que está tocando no momento e qual a faixa dela na playlist;
 - Possibilidade de reconexão ao servidor após encerramento do cliente.
 
 No lado do servidor:
 - Prover interface que aceite os novos comandos do cliente;
 - Permitir múltiplas conexões de clientes;
-- Listar número de clientes conectados;
+- Prover streaming para todos os clientes conectados ao mesmo tempo;
+- Listar número de clientes conectados, exemplo: [03/10];
 - Manter o servidor sempre ativo, independente de ter cliente ou não;
      - O administrador do servidor daria o comando EXIT para encerrar o servidor;
      - Um limite máximo de conexões pode ser estabelecido, exemplo: 10 conexões;
      - O servidor teria uma lista de conexões ativas e disponíveis;
           - A cada nova conexão o contador seria incrementado até chegar ao limite;
-          - Caso um cliente se desconecte, o servidor liberaria a conexão para outro cliente.
+          - Caso um cliente se desconecte, o servidor liberaria a conexão para outro cliente poder conectar.
