@@ -10,5 +10,8 @@ void q_destroy(queue *q);
 void q_insert(queue *q, int key, void *item);
 void q_sort_insert(queue *q, int key, void *item);
 void *q_pop(queue *q);
+int q_size(queue *q);
+int q_key_last(queue *q);
+int q_key_first(queue *q);
 
 #endif

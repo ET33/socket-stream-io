@@ -118,7 +118,26 @@ void *q_pop(queue *q) {
 	return item;
 }
 
+int q_size(queue *q) {
+	if (q) {
+		return q->size;
+	}
+	return 0;
+}
 
+int q_key_first(queue *q) {
+	if (q && q->first_n) {
+		return q->first_n->key;
+	}
+	return 0;
+}
+
+int q_key_last(queue *q) {
+	if (q && q->last_n) {
+		return q->last_n->key;
+	}
+	return 0;
+}
 
 // Queue debug
 

@@ -1,4 +1,5 @@
 #include "server.h"
+#include "queue.h"
 
 // '0' stands for IP:
 // Check out /etc/protocol with cat command
@@ -62,33 +63,33 @@ int main(int argc, char * const argv[]) {
 	// Application goes here
 	data_unit msg;
 	do {
-	printf(
-		ANSI_COLOR_RED 
-		"Server response: " 
-		ANSI_COLOR_RESET);
-
-	scanf("%[^\n]%*c", msg.description);	
-	msg.id = MESSAGE;
-
-	/* Enviando a msg para o cliente. */
-	send(new_socket, &msg, sizeof(msg), 0);
-
-	/* Recebendo a msg do cliente. */
-	if (recv(new_socket, &msg, sizeof(msg), 0) == -1){
-		ERROR_EXIT(
-		ANSI_COLOR_RED 
-		"Error on receiving data from client" 
-		ANSI_COLOR_RESET);
-
-	} else {
-
 		printf(
-		ANSI_COLOR_CYAN 
-		"Client response: " 
-		ANSI_COLOR_RESET "%s \n", 
-		msg.description);
+			ANSI_COLOR_RED 
+			"Server response: " 
+			ANSI_COLOR_RESET);
 
-	}
+		scanf("%[^\n]%*c", msg.description);	
+		msg.id = MESSAGE;
+
+		/* Enviando a msg para o cliente. */
+		send(new_socket, &msg, sizeof(msg), 0);
+
+		/* Recebendo a msg do cliente. */
+		if (recv(new_socket, &msg, sizeof(msg), 0) == -1){
+			ERROR_EXIT(
+			ANSI_COLOR_RED 
+			"Error on receiving data from client" 
+			ANSI_COLOR_RESET);
+
+		} else {
+
+			printf(
+			ANSI_COLOR_CYAN 
+			"Client response: " 
+			ANSI_COLOR_RESET "%s \n", 
+			msg.description);
+
+		}
 	} while(msg.id != EXIT);
 
 	// Free host IP memory
