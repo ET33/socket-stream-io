@@ -21,6 +21,3 @@ zip:
 run:
 	@./server &
 	@./client
-
-main.o:
-	@gcc -c main.c $(CFLAGS)
