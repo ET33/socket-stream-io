@@ -1,9 +1,4 @@
-#include <server.h>
-       #include <sys/types.h>
-       #include <sys/socket.h>
-       #include <netdb.h>
-       #include <sys/socket.h>
-       #include <netdb.h>
+#include "server.h"
 
 server *create_server(
 	unsigned int buffer_size, 

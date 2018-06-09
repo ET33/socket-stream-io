@@ -1,4 +1,4 @@
-CFLAGS= -Wall -I ./
+CFLAGS= -Wall
 all: clean server.o client.o main.o
 	@gcc client.o -o client $(CFLAGS)
 	@gcc server.o main.o -o server $(CFLAGS)

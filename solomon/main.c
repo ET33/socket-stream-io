@@ -1,7 +1,7 @@
-#include <server.h>
+#include "server.h"
 
-// '0' stands for IP
-// Check out /etc/protocol
+// '0' stands for IP:
+// Check out /etc/protocol with cat command
 
 int main(int argc, char * const argv[]) {
 	if(argv[1] == NULL) {

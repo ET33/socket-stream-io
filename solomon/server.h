@@ -4,7 +4,6 @@
 // Include section
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <data-struct-def.h>
 #include <ifaddrs.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -13,6 +12,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "data-struct-def.h"
+
+
 
 // Define and typedef section
 #define ERROR_EXIT(STR) ({perror(STR); exit(EXIT_FAILURE);})
@@ -34,7 +36,10 @@ typedef struct {
     char *buffer;
 } server;
 
-// Function declaration
+
+
+
+// Function declaration section
 server *create_server(
 	unsigned int buffer_size, 
 	unsigned short int port, 

@@ -1,12 +1,4 @@
-#include <server.h>
-
-/*
-	Client Socket Workflow
-	1. Socket;
-	2. Connect;
-	3. Send/Receive Message;
-	4. Close Connection.
-*/
+#include "server.h"
 
 int main(int argc, char * const argv[]){
     if(argc != 3) {
