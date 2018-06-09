@@ -40,8 +40,8 @@ void add_new_socket(socket_connections *sc, int new_socket) {
 
 void *listen_socket(void *arguments) {
     int client_socket = *((int *) arguments);
-    
     data_unit msg;
+    
     do {
         if (recv(client_socket, &msg, sizeof(msg), 0) == -1) {
             printf(ANSI_COLOR_RED "Error on receiving data from client\n" ANSI_COLOR_RESET);

@@ -1,5 +1,10 @@
 #include "sockets.h"
 
+struct asdf {
+    int server_socket,
+        other_socket;
+};
+
 void *hear(void *arguments) {
     int socket_server = *((int *)arguments);
     data_unit msg;
@@ -50,22 +55,15 @@ int main(int argc, char * const argv[]){
 
     printf("server socket: %d\n target_socket: %d\n", client_socket->fd, client_socket->target_fd);
 
-<<<<<<< HEAD
     /* Application section. */
     pthread_t talk_thread, hear_thread;
-=======
     pthread_t talk_thread,
               hear_thread;
->>>>>>> Try sockets with threads
 
     pthread_create(&talk_thread, NULL, talk, &client_socket);
     pthread_create(&hear_thread, NULL, hear, &client_socket->fd);
 
-<<<<<<< HEAD
     pthread_join(talk_thread, NULL);
-=======
-    pthread_join(hear_thread, NULL);
->>>>>>> Try sockets with threads
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
