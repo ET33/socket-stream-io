@@ -1,120 +1,58 @@
-#include "server.h"
-#include "queue.h"
+#include "sockets.h"
+#include "bytestream.h"
 
-server *create_server(
-	unsigned int buffer_size, 
-	unsigned short int port, 
-	int server_type, 
-	int protocol, 
-	char *ip_address) {
+/* '0' stands for IP:
+Check out /etc/protocol with cat command. */
 
-    server *s = malloc(sizeof(server));
-    if (s == NULL)
-        ERROR_EXIT(
-		ANSI_COLOR_RED 
-		"Failed to init server structure" 
-		ANSI_COLOR_RESET);
+int main(int argc, char * const argv[]) {
+	if (argc != 2)
+		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s port\n" ANSI_COLOR_RESET, argv[0]);
 
-    s->buffer = malloc(sizeof(char) * buffer_size);
-    if (s->buffer == NULL)
-        ERROR_EXIT(
-		ANSI_COLOR_RED 
-		"Failed to init buffer" 
-		ANSI_COLOR_RESET);
-    
-    // Create server file descriptor
-    s->fd = socket(server_type, SOCK_STREAM, protocol);
+	char *host = getIP();
+	unsigned short int port = atoi(argv[1]);	
 
-    // Server configuration
-    int aux = 1;
-    int ret = setsockopt(s->fd,
-                         SOL_SOCKET,
-                         SO_REUSEADDR | SO_REUSEPORT,
-                         &aux,
-                         sizeof(aux));
-    if (ret)
-        ERROR_EXIT(
-		ANSI_COLOR_RED 
-		"Failed at server configuration" 
-		ANSI_COLOR_RESET);
+	/* Initialize server structure. */
+	socket_structure *server_socket = create_socket(BUFFER_SIZE, port, SERVER_TYPE, PROTOCOL, host, SERVER);
 
-    // Define the server address
-    s->address.sin_family = server_type;
-    s->address.sin_addr.s_addr = inet_addr(ip_address);
-    s->address.sin_port = htons(port);
+	/* Bind server to the given port. */
+	attach_server(server_socket, port);
 
-    return s;
+	/* Listen. */	
+	printf(ANSI_COLOR_GREEN "Server listening" ANSI_COLOR_YELLOW " %s" ANSI_COLOR_GREEN " on port" ANSI_COLOR_YELLOW " %d" ANSI_COLOR_GREEN"...\n" ANSI_COLOR_RESET, host, port);
+	if (listen(server_socket->fd, NUM_CONNECTIONS))
+		ERROR_EXIT(ANSI_COLOR_RED "Failed to listen for connections" ANSI_COLOR_RESET);
+	
+	/* Create client socket. */
+	int new_socket;
+	if ((new_socket = accept(server_socket->fd, NULL, NULL)) == -1)
+		ERROR_EXIT(ANSI_COLOR_RED "Failed to accept client" ANSI_COLOR_RESET);
+	else
+		printf(ANSI_COLOR_GREEN "Connection accepted.\n" ANSI_COLOR_RESET);
+
+	/* Application section. */
+	data_unit msg;
+	do {
+		printf(ANSI_COLOR_RED "Server response: " ANSI_COLOR_RESET);
+
+		scanf("%[^\n]%*c", msg.description);	
+		msg.id = MESSAGE;
+
+		/* Enviando a msg para o cliente. */
+		send(new_socket, &msg, sizeof(msg), 0);
+
+		/* Recebendo a msg do cliente. */
+		if (recv(new_socket, &msg, sizeof(msg), 0) == -1)
+			ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from client" ANSI_COLOR_RESET);
+		else 
+			printf(ANSI_COLOR_CYAN "Client response: " ANSI_COLOR_RESET "%s \n", msg.description);		
+	} while(msg.id != EXIT);
+
+	/* Free host IP memory. */
+	if (host)
+		free(host);
+
+	/* Destroy server structure. */
+	destroy_socket(server_socket);
+
+	return 0;
 }
-
-int attach_server(server * s, unsigned short int port) {
-    if (s == NULL)
-        return 0;
-
-    // Bind server to the specified port
-    int ret = bind(s->fd,
-                   (struct sockaddr *) &s->address,
-                   sizeof(struct sockaddr_in));
-
-    // From man: "On success, zero is returned.  
-    // On error, -1 is returned, and errno is set appropriately. "
-    if (ret)
-        ERROR_EXIT(
-		ANSI_COLOR_RED 
-		"Failed to bind server to specified PORT." 
-		ANSI_COLOR_RESET);
-
-    return 1;
-}
-
-void destroy_server(server *s) {
-	// Free memory allocated for all server structure
-	if (s) {
-		close(s->fd);
-
-		if (s->buffer)
-			free(s->buffer);
-		    
-		free(s);
-	}
-}
-
-char *getIP() {
-	int cont = 0;
-	struct ifaddrs *ifaddr, *ifa;
-	int family, s;
-	char *host = malloc(sizeof(char) * (1 + NI_MAXHOST));
-
-	if (getifaddrs(&ifaddr) == -1) {
-		ERROR_EXIT("Failed at getting IP.");
-	}
-
-	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-		family = ifa->ifa_addr->sa_family;
-
-		if (family == AF_INET) {
-			s = getnameinfo(
-				ifa->ifa_addr, 
-				sizeof(struct sockaddr_in),
-				host, 
-				NI_MAXHOST, 
-				NULL, 
-				0, 
-				NI_NUMERICHOST);
-
-			if (s != 0) {
-			printf(
-				ANSI_COLOR_RED 
-				"getnameinfo() failed: %s\n" 
-				ANSI_COLOR_RESET, 
-				gai_strerror(s));
-			exit(EXIT_FAILURE);
-			}			
-
-		}
-
-		cont++;
-	}
-
-	return host; 
-}
-

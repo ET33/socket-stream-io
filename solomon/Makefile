@@ -1,18 +1,10 @@
-CFLAGS= -Wall
-all: clean queue.o bytestream.o server.o client.o main.o
-	@gcc queue.o bytestream.o client.o -o client -l pthread $(CFLAGS)
-	@gcc queue.o bytestream.o server.o main.o -o server -l pthread $(CFLAGS)
-server.o:	
-	@gcc -c server.c $(CFLAGS)
+CFLAGS= -Wall -l pthread
+all: clean sources
+	@gcc queue.o bytestream.o sockets.o client.o -o client $(CFLAGS)
+	@gcc queue.o bytestream.o sockets.o server.o -o server $(CFLAGS)
 
-client.o:
-	@gcc -c client.c $(CFLAGS)
-
-queue.o:
-	@gcc -c queue.c $(CFLAGS)
-
-bytestream.o:
-	@gcc -c bytestream.c -l pthread $(CFLAGS)
+sources:	
+	@gcc -c *.c $(CFLAGS)
 
 clean:
 	@rm -rf *.o server client queue solomon.zip 

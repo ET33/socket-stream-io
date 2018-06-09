@@ -1,7 +1,25 @@
 #include <pthread.h>
-#include "server.h"
-#include "data-struct-def.h"
+#include "sockets.h"
 #include "queue.h"
+
+/*
+ * This modulus should take care of the bytestream
+ * exchange between "server" and "client". It should:
+ * -	Process data exchanged with the data_unit struct
+ * -	Organize the data accordingly to the id sequence
+ * -	Take care of the temporary audio microfiles (to do)
+ * - 	Play the sounds in the correct order (to do)
+ */
+
+/*
+	How to integrate with the current Client-Server
+	structure:
+
+	Both client and server must call processSounds()
+	just before the program main locking loop, giving 
+	the correct parameters. This function should take 
+	care of the rest without extern interference.
+*/
 
 typedef struct {
 	queue *ready_q;
@@ -9,7 +27,7 @@ typedef struct {
 	int *process_end;
 } args_struct;
 
-void *process_ready_queue(void *vargs) {
+static void *process_ready_queue(void *vargs) {
 	/*
 		This function (openned within a thread) has the
 		task of processing the ready_q.
@@ -42,8 +60,12 @@ void *process_ready_queue(void *vargs) {
 				strcat(command + aplaySize, filepath); 
 
 				// Play sound on the given filepath
+				// Check if command correspondent audio
+				// microfile exists and play it right here
+				// (to do!)
 				//syscall(command);
-				printf("test: %s\n", command);
+
+				printf("(consider playing audio now) test: %s\n", command);
 
 				// Free system used memory
 				free(filepath);
@@ -55,7 +77,7 @@ void *process_ready_queue(void *vargs) {
 	return NULL;
 }
 
-void *update_ready_queue(void *vargs) {
+static void *update_ready_queue(void *vargs) {
 	/*
 		This function (openned within a thread) has the
 		task to fill the ready_q with the correct data
