@@ -1,0 +1,6 @@
+.SERVER_DIR/
+.CLIENT_DIR/
+*.o
+*.swp
+client
+server
