@@ -6,6 +6,7 @@
 enum{
     INVALID,
     MESSAGE,
+    MUSIC,
     AUDIO,
     VIDEO,
     IMAGE,

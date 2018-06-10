@@ -1,6 +1,33 @@
 #include "sockets.h"
 #include "bytestream.h"
 
+/* Process data send by the server. */
+void process_data(data_unit data) {
+	/* Execute the required operation. */
+	switch(data.control_id) {		
+		case LIST:
+			printf("%s\n", data.description);
+			break;
+
+		case MUSIC:
+			/* Play the track. */			
+			break;
+
+		case MESSAGE:
+			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
+			break;
+
+		case EXIT: /* The server is shutting down. */
+			printf("Disconnecting...\n");	
+			break;
+
+		default:
+			printf("Invalid command.\n");
+			break;
+	}
+
+}
+
 /* Process the command inserted by the client. */
 data_unit process_commands(data_unit msg) {
 	char **str = (char **) malloc(sizeof(char **));
@@ -111,20 +138,22 @@ int main(int argc, char * const argv[]){
     printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
     printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the list of commands.\n");
 
-    do {
+    do {    	
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
             ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
         else 
-            printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", msg.description);
+            process_data(msg);
                
         printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
         scanf("%[^\n]%*c", msg.description);
         msg = process_commands(msg);
         
         /* Enviando msg para o servidor. */
-        if(msg.control_id != INVALID && msg.control_id != HELP)
-        	send(client_socket->fd, &msg, sizeof(msg), 0);
-    } while (!process_end && msg.control_id != EXIT);
+		if (msg.control_id != INVALID && msg.control_id != HELP)
+			send(client_socket->fd, &msg, sizeof(msg), 0);
+		if(msg.control_id == EXIT)
+			process_end = 1;	
+    } while (!process_end);
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
