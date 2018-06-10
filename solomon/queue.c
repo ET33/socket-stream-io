@@ -95,7 +95,7 @@ void q_sort_insert(queue *q, int key, void *item) {
 
 void *q_pop(queue *q) {
 	void *item = NULL;
-	if (q) {
+	if (q && q->size > 0) {
 		node *to_pop = q->last_n, *prev=NULL;
 
 		while (to_pop != q->first_n) {

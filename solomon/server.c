@@ -30,7 +30,13 @@ int main(int argc, char * const argv[]) {
 		printf(ANSI_COLOR_GREEN "Connection accepted.\n" ANSI_COLOR_RESET);
 
 	/* Application section. */
-	data_unit msg;
+	data_unit msg = {0};
+	msg.id = INVALID;
+	int process_end = 0;
+	
+	/* Calling the audio processing function */
+	processSounds(&msg, &process_end);
+
 	do {
 		printf(ANSI_COLOR_RED "Server response: " ANSI_COLOR_RESET);
 
@@ -45,7 +51,7 @@ int main(int argc, char * const argv[]) {
 			ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from client" ANSI_COLOR_RESET);
 		else 
 			printf(ANSI_COLOR_CYAN "Client response: " ANSI_COLOR_RESET "%s \n", msg.description);		
-	} while(msg.id != EXIT);
+	} while(!process_end);
 
 	/* Free host IP memory. */
 	if (host)

@@ -37,7 +37,7 @@ static void *process_ready_queue(void *vargs) {
 	queue *ready_q = args->ready_q;
 	int *process_end = args->process_end;
 	
-	char *command = NULL, *filepath;
+	char *command = NULL, *filepath = NULL;
 	char aplayCommand[] = "aplay ";
 	const unsigned long int aplaySize = strlen(aplayCommand);
 
@@ -46,6 +46,7 @@ static void *process_ready_queue(void *vargs) {
 		
 		// If there's something to play...
 		if (q_size(ready_q)) {
+			printf("debug: %d\n", q_size(ready_q));
 			filepath = q_pop(ready_q);
 			if (filepath) {
 				// "aplay " size 
@@ -53,7 +54,6 @@ static void *process_ready_queue(void *vargs) {
 				// + null terminator character
 				command = malloc(sizeof(char) * 
 					(aplaySize + strlen(filepath) + 1));
-
 
 				// Concatenate "aplay " with given filepath
 				strcpy(command, aplayCommand);
@@ -103,7 +103,7 @@ static void *update_ready_queue(void *vargs) {
 
 	// Repeat til program process ends
 	while(!(*process_end)) {
-		if (cur_data_unit) {
+		if (cur_data_unit->id != INVALID) {
 			// It's necessary to transfer the content
 			// of the cur_data_unit->description to
 			// a dynamic memory region because the
@@ -118,22 +118,30 @@ static void *update_ready_queue(void *vargs) {
 			
 			// Expecting that "cur_data_unit"
 			// isn't dinamically allocated.
-			cur_data_unit = NULL;
+			cur_data_unit->id = INVALID;
+
+			// Caution: >>DON'T FREE<< filepath!
+			// It's dynamic memory region is
+			// stored in the aux_q!
 			filepath = NULL;
 		}
 		
-		/*
-		If the first key at the aux_q is the next data unit,
-		append it to the ready_q.
 
-		[...][n+k][n] --(?)--> 
-			[n-1][n-2][...][1] --q_pop()--> 
-				PlaySound()
-		*/
-		if (q_size(ready_q) == 0 || q_key_first(aux_q) == 1 + q_key_last(ready_q)) {
-			filepath = q_pop(aux_q);
-			key = q_key_first(aux_q);
-			q_insert(ready_q, key, filepath);
+		// If there's something to process...
+		if (q_size(aux_q)) {
+			/*
+			If the first key at the aux_q is the next data unit,
+			append it to the ready_q.
+
+			[...][n+k][n] --(?)--> 
+				[n-1][n-2][...][1] --q_pop()--> 
+					PlaySound()
+			*/
+			if (q_size(ready_q) == 0 || q_key_first(aux_q) == 1 + q_key_last(ready_q)) {
+				filepath = q_pop(aux_q);
+				key = q_key_first(aux_q);
+				q_insert(ready_q, key, filepath);
+			}
 		}
 	}
 
@@ -162,17 +170,8 @@ void processSounds(data_unit *cur_data_unit, int *process_end) {
 	};
 
 	// Create threads
-	pthread_create(
-		thread_id + 0, 
-		NULL, 
-		process_ready_queue, 
-		(void *) &args);
-
-	pthread_create(
-		thread_id + 1, 
-		NULL, 
-		update_ready_queue, 
-		(void *) &args);
+	pthread_create(thread_id + 0, NULL, process_ready_queue, (void *) &args);
+	pthread_create(thread_id + 1, NULL, update_ready_queue, (void *) &args);
 
 	// Join (wait) threads terminate
 	pthread_join(thread_id[0], NULL);
