@@ -32,8 +32,9 @@ enum{
 
 /* Basic data transfer between client and server. */
 typedef struct {
-    int id;
-    char description[BUFFER_SIZE];
+	int control_id; // Interface Commands
+    int id; // Package Order Number
+    char description[BUFFER_SIZE]; // Data
 } data_unit;
 
 #endif

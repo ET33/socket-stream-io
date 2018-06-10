@@ -13,6 +13,7 @@ int main(int argc, char * const argv[]){
     
     /* Application section. */
     data_unit msg = {0};
+    msg.control_id = MESSAGE;
     msg.id = INVALID;
     int process_end = 0;
 
@@ -28,7 +29,7 @@ int main(int argc, char * const argv[]){
         printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
 
         scanf("%[^\n]%*c", msg.description);
-        msg.id = MESSAGE;
+        msg.control_id = MESSAGE;
 
         /* Enviando msg para o servidor. */
         send(client_socket->fd, &msg, sizeof(msg), 0);
