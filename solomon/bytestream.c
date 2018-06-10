@@ -46,8 +46,7 @@ static void *process_ready_queue(void *vargs) {
 				// "aplay " size 
 				// + filepath size 
 				// + null terminator character
-				command = malloc(sizeof(char) * 
-					(aplaySize + strlen(filepath) + 1));
+				command = malloc(sizeof(char) * (aplaySize + strlen(filepath) + 1));
 
 				// Concatenate "aplay " with given filepath
 				strcpy(command, aplayCommand);
@@ -101,8 +100,7 @@ static void *update_ready_queue(void *vargs) {
 			// a dynamic memory region because the
 			// cur_data_unit memory region will be
 			// soon cleaned up at the end of this "if".
-			filepath = malloc(sizeof(char) * 
-				(1 + strlen(cur_data_unit->description)));
+			filepath = malloc(sizeof(char) * (1 + strlen(cur_data_unit->description)));
 
 			strcpy(filepath, cur_data_unit->description);
 			
