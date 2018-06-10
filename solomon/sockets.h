@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 /* There's also "data-struct-def.h" included
 below because it depends on the BUFFER_SIZE
 define constant. */

@@ -1,4 +1,5 @@
 #include "sockets.h"
+#include "bytestream.h"
 
 int main(int argc, char * const argv[]){
     if (argc != 3) 
@@ -11,7 +12,13 @@ int main(int argc, char * const argv[]){
     connect_server(client_socket, argv[1], argv[2]);
     
     /* Application section. */
-    data_unit msg;
+    data_unit msg = {0};
+    msg.id = INVALID;
+    int process_end = 0;
+
+    /* Calling the audio processing function */
+    sound_struct *ss = processSounds(&msg, &process_end);
+
     do {
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
             ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
@@ -25,10 +32,11 @@ int main(int argc, char * const argv[]){
 
         /* Enviando msg para o servidor. */
         send(client_socket->fd, &msg, sizeof(msg), 0);
-    } while (msg.id != EXIT);
+    } while (!process_end);
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
+    destroy_sound_struct(ss);
 
     return 0;
 }
