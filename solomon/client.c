@@ -1,6 +1,11 @@
 #include "sockets.h"
 #include "bytestream.h"
 
+socket_structure *client_socket;
+sound_struct *ss;
+int process_end = 0;
+pthread_t recv_thread, send_thread;
+
 /* Process data send by the server. */
 void process_data(data_unit data) {
 	/* Execute the required operation. */
@@ -16,11 +21,11 @@ void process_data(data_unit data) {
 		case MESSAGE:
 			printf("\n");
 			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);			
-			printf(ANSI_COLOR_MAGENTA "Client response:" ANSI_COLOR_RESET "\n");						
+			printf(ANSI_COLOR_MAGENTA "Client response:" ANSI_COLOR_RESET "\n");			
 			break;
 
 		case EXIT: /* The server is shutting down. */
-			printf("Disconnecting...\n");	
+			printf("Disconnecting...\n");				    					
 			break;
 
 		default:
@@ -99,7 +104,7 @@ data_unit process_commands(data_unit msg) {
 			break;
 
 		case EXIT:							
-			printf("Disconnecting...\n");	
+			printf("Disconnecting...\n");			
 			break;
 
 		default:
@@ -119,9 +124,6 @@ data_unit process_commands(data_unit msg) {
 	return msg;
 }
 
-socket_structure *client_socket;
-int process_end = 0;
-
 void *recv_data(void *args) {
 	data_unit msg = *((data_unit *) args);
 
@@ -131,8 +133,10 @@ void *recv_data(void *args) {
         else 
             process_data(msg);                             
         
-		if(msg.control_id == EXIT)
+		if(msg.control_id == EXIT) {
 			process_end = 1;	
+			pthread_exit(&recv_thread);
+		}
     } while (!process_end);
 
     return NULL;
@@ -143,14 +147,20 @@ void *send_data(void *args) {
 
 	do {   	           
         printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
-        scanf("%[^\n]%*c", msg.description);
-        msg = process_commands(msg);
+        
+        scanf("%[^\n]%*c", msg.description);     
+        if (msg.description[0] == '\0')        	
+        	getchar();
+        else
+        	msg = process_commands(msg);        
         
         /* Enviando msg para o servidor. */
 		if (msg.control_id != INVALID && msg.control_id != HELP)
 			send(client_socket->fd, &msg, sizeof(msg), 0);
-		if(msg.control_id == EXIT)
+		if(msg.control_id == EXIT) {
 			process_end = 1;	
+			pthread_exit(&send_thread);
+		}
     } while (!process_end);
 
     return NULL;
@@ -172,13 +182,12 @@ int main(int argc, char * const argv[]){
     msg.id = INVALID;    
 
     /* Calling the audio processing function */
-    sound_struct *ss = processSounds(&msg, &process_end);
+    ss = processSounds(&msg, &process_end);
 
     printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
     printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the list of commands.\n");
 
-    /* Making asynchronous communication. */
-    pthread_t recv_thread, send_thread;
+    /* Making asynchronous communication. */    
     pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
     pthread_create(&send_thread, NULL, send_data, (void *) &msg);
 	pthread_join(recv_thread, NULL);    
