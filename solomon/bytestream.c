@@ -4,6 +4,7 @@
 #include "bytestream.h"
 
 /*
+
 	This modulus should take care of the bytestream
 	exchange between "server" and "client". It should:
 	-	Process data exchanged with the data_unit struct
@@ -50,8 +51,6 @@
 
 */
 
-
-
 /*
 	How to integrate with the current Client-Server
 	structure:
@@ -61,6 +60,7 @@
 	the correct parameters. This function should take 
 	care of the rest without extern interference.
 */
+
 
 static char *readline(FILE *fp) {
 	/*
@@ -217,7 +217,7 @@ static void *process_ready_queue(void *vargs) {
 
 	// Repeat til program process runs off
 	while (!(*process_end)) {
-		
+  
 		// If there's something to create another 
 		// temporary microaudio file...
 		if (q_size(ready_q)) {
@@ -325,17 +325,20 @@ static void *update_ready_queue(void *vargs) {
 
 void destroy_sound_struct (sound_struct *ss) {
 	if (ss) {
+
 		if ((ss->thread_id)[PLAY_MICROAUDIOS])
 			pthread_exit(ss->thread_id + PLAY_MICROAUDIOS);
 		if ((ss->thread_id)[UPDATE_READY_QUEUE])
 			pthread_exit(ss->thread_id + UPDATE_READY_QUEUE);
 		if ((ss->thread_id)[PROCESS_READY_QUEUE])
 			pthread_exit(ss->thread_id + PROCESS_READY_QUEUE);
+
 		if (ss->args.ready_q)
 			q_destroy(ss->args.ready_q);
 		free(ss);
 	}
 }
+
 
 void create_temp_microaudio_dir(char *path) {
 	// This function creates the temporary subdirectory
