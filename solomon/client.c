@@ -11,13 +11,17 @@ int main(int argc, char * const argv[]){
     /* Estabelece conexão com o socket server. */
     connect_server(client_socket, argv[1], argv[2]);
     
+    // To do: concatenate this default path to a UNIQUE ID
+    // for each client
+    create_temp_microaudio_dir(TEMP_CLIENT_DIR);
+
     /* Application section. */
     data_unit msg = {0};
     msg.id = INVALID;
     int process_end = 0;
 
     /* Calling the audio processing function */
-    sound_struct *ss = processSounds(&msg, &process_end);
+    sound_struct *ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR);
 
     do {
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 

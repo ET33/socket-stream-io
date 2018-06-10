@@ -22,45 +22,98 @@
 	care of the rest without extern interference.
 */
 
+static void *play_microaudios(void *vargs) {
+	/*
+		This function has the task of
+		playing the microaudios at the
+		correct order.
+	*/
+
+	args_struct *args = (args_struct *) vargs;
+	int *process_end = args->process_end;
+	char *temp_dir_path = args->temp_dir_path;
+
+	// Command used to play each microaudio
+	char aplayCommand[] = "aplay ";
+	const unsigned long int aplaySize = strlen(aplayCommand);
+
+	char *command = NULL, *filepath = NULL;
+	// Repeat til program process runs off
+	while (!(*process_end)) {
+
+				// "aplay " size 
+				// + filepath size 
+				// + null terminator character
+				//command = malloc(sizeof(char) * (aplaySize + strlen(filepath) + 1));
+
+				// Concatenate "aplay " with given filepath
+				//strcpy(command, aplayCommand);
+				//strcat(command + aplaySize, filepath); 
+				// Play sound on the given filepath
+				// Check if command correspondent audio
+				// microfile exists and play it right here
+				// (to do!)
+				// system(command);
+				//free(command);
+	}	
+
+	return NULL;
+}
+
 static void *process_ready_queue(void *vargs) {
 	/*
 		This function (openned within a thread) has the
-		task of processing the ready_q.
+		task of processing the ready_q, creating the
+		temporary microaudio files.
 	*/
 
 	args_struct *args = (args_struct *) vargs;
 	queue *ready_q = args->ready_q;
 	int *process_end = args->process_end;
+	char *temp_dir_path = args->temp_dir_path;
 	
-	char *command = NULL, *filepath = NULL;
-	char aplayCommand[] = "aplay ";
-	const unsigned long int aplaySize = strlen(aplayCommand);
+	char *microaudio = NULL, *microaudio_filepath = NULL;
+	FILE *temp_f = NULL;
+
+	const unsigned long int temp_dir_path_len = strlen(temp_dir_path);
+
+	// This counter will keep track of the current
+	// microaudio id, in order to create the correct
+	// microaudio filenames. I'm not worried
+	// what will happens on this counter overflow.
+	// Just for quick reference, the max value of this
+	// thing is 18,446,744,073,709,551,615.
+	unsigned long long int microaudio_counter = 0;
 
 	// Repeat til program process runs off
 	while (!(*process_end)) {
 		
-		// If there's something to play...
+		// If there's something to create another 
+		// temporary microaudio file...
 		if (q_size(ready_q)) {
-			filepath = q_pop(ready_q);
-			if (filepath) {
-				// "aplay " size 
-				// + filepath size 
-				// + null terminator character
-				command = malloc(sizeof(char) * (aplaySize + strlen(filepath) + 1));
+			microaudio = q_pop(ready_q);
+			if (microaudio) {
+				printf("here?\n");
+				microaudio_filepath = malloc(sizeof(char) *
+					(1 + temp_dir_path_len + MAX_COUNTER_LEN));
 
-				// Concatenate "aplay " with given filepath
-				strcpy(command, aplayCommand);
-				strcat(command + aplaySize, filepath); 
+				// Concatenate temp_dir_path and microaudio_counter
+				// on microaudio_filepath buffer
+				sprintf(microaudio_filepath, "%s%llu", 
+					temp_dir_path, microaudio_counter);
 
-				// Play sound on the given filepath
-				// Check if command correspondent audio
-				// microfile exists and play it right here
-				// (to do!)
-				//syscall(command);
+				// If there's a microaudio, create a temporary
+				// microaudio file for it.
+				temp_f = fopen(microaudio_filepath, "w");
+
+				// Write microaudio content on the selected file
+				fwrite(microaudio, sizeof(char), BUFFER_SIZE, temp_f);
 
 				// Free system used memory
-				free(filepath);
-				free(command);
+				fclose(temp_f);
+				free(microaudio_filepath);
+				free(microaudio);
+				microaudio_counter++;
 			}
 		}
 	}
@@ -143,17 +196,39 @@ static void *update_ready_queue(void *vargs) {
 
 void destroy_sound_struct (sound_struct *ss) {
 	if (ss) {
-		if ((ss->thread_id)[0])
-			pthread_exit(ss->thread_id + 0);
-		if ((ss->thread_id)[1])
-			pthread_exit(ss->thread_id + 1);
+		if ((ss->thread_id)[PLAY_MICROAUDIOS])
+			pthread_exit(ss->thread_id + PLAY_MICROAUDIOS);
+		if ((ss->thread_id)[UPDATE_READY_QUEUE])
+			pthread_exit(ss->thread_id + UPDATE_READY_QUEUE);
+		if ((ss->thread_id)[PROCESS_READY_QUEUE])
+			pthread_exit(ss->thread_id + PROCESS_READY_QUEUE);
 		if (ss->args.ready_q)
 			q_destroy(ss->args.ready_q);
 		free(ss);
 	}
 }
 
-sound_struct *processSounds(data_unit *cur_data_unit, int *process_end) {
+void create_temp_microaudio_dir(char *path) {
+	char inst[] = "mkdir -p ";
+	char *command = malloc(sizeof(char) * 
+		(strlen(path) + strlen(inst) + 1));
+	strcpy(command, inst);
+	strcat(command, path);
+	system(command);
+	free(command);
+}
+
+void remove_temp_microaudio_dir(char *path) {
+	char inst[] = "rm -r ";
+	char *command = malloc(sizeof(char) * 
+		(strlen(path) + strlen(inst) + 1));
+	strcpy(command, inst);
+	strcat(command, path);
+	system(command);
+	free(command);
+}
+
+sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *temp_dir_path) {
 	sound_struct *ss = malloc(sizeof(sound_struct));
 	/*
 		ready_q(ueue) -> A sorted and complete queue that
@@ -165,14 +240,17 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end) {
 	ss->args.ready_q = q_init();
 	ss->args.cur_data_unit = cur_data_unit;
 	ss->args.process_end = process_end;
+	ss->args.temp_dir_path = temp_dir_path;
 
 	// Create threads
-	pthread_create(ss->thread_id + 0, NULL, process_ready_queue, (void *) &(ss->args));
-	pthread_create(ss->thread_id + 1, NULL, update_ready_queue, (void *) &(ss->args));
+	pthread_create(ss->thread_id + PROCESS_READY_QUEUE, NULL, process_ready_queue, (void *) &(ss->args));
+	pthread_create(ss->thread_id + UPDATE_READY_QUEUE, NULL, update_ready_queue, (void *) &(ss->args));
+	pthread_create(ss->thread_id + PLAY_MICROAUDIOS, NULL, play_microaudios, (void *) &(ss->args));
 
 	// Join (wait) threads terminate
-	pthread_detach((ss->thread_id)[0]);
-	pthread_detach((ss->thread_id)[1]);
+	pthread_detach((ss->thread_id)[PROCESS_READY_QUEUE]);
+	pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
+	pthread_detach((ss->thread_id)[PLAY_MICROAUDIOS]);
 	
 	return ss;
 }
