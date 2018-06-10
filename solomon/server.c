@@ -41,7 +41,7 @@ void add_new_socket(socket_connections *sc, int new_socket) {
 void *listen_socket(void *arguments) {
     int client_socket = *((int *) arguments);
     data_unit msg;
-    
+
     do {
         if (recv(client_socket, &msg, sizeof(msg), 0) == -1) {
             printf(ANSI_COLOR_RED "Error on receiving data from client\n" ANSI_COLOR_RESET);
@@ -56,19 +56,19 @@ void *listen_socket(void *arguments) {
 }
 
 int main(int argc, char * const argv[]) {
-	if (argc != 2)
-		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s port\n" ANSI_COLOR_RESET, argv[0]);
+    if (argc != 2)
+        ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s port\n" ANSI_COLOR_RESET, argv[0]);
 
-	char *host = getIP();
-	unsigned short int port = atoi(argv[1]);	
+    char *host = getIP();
+    unsigned short int port = atoi(argv[1]);
 
-	/* Initialize server structure. */
-	socket_structure *server_socket = create_socket(BUFFER_SIZE, port, SERVER_TYPE, PROTOCOL, host, SERVER);
+    /* Initialize server structure. */
+    socket_structure *server_socket = create_socket(BUFFER_SIZE, port, SERVER_TYPE, PROTOCOL, host, SERVER);
 
-	/* Bind server to the given port. */
-	attach_server(server_socket, port);
+    /* Bind server to the given port. */
+    attach_server(server_socket, port);
 
-	printf(ANSI_COLOR_GREEN "Server listening" ANSI_COLOR_YELLOW " %s" ANSI_COLOR_GREEN " on port" ANSI_COLOR_YELLOW " %d" ANSI_COLOR_GREEN"...\n" ANSI_COLOR_RESET, host, port);
+    printf(ANSI_COLOR_GREEN "Server listening" ANSI_COLOR_YELLOW " %s" ANSI_COLOR_GREEN " on port" ANSI_COLOR_YELLOW " %d" ANSI_COLOR_GREEN"...\n" ANSI_COLOR_RESET, host, port);
 
     socket_connections *all_sockets = init_socket_connections();
     socket_rooms *all_rooms = init_socket_rooms();
@@ -78,7 +78,7 @@ int main(int argc, char * const argv[]) {
 
     /* Application section. */
     do {
-        /* Listen. */	
+        /* Listen. */
         if (listen(server_socket->fd, NUM_CONNECTIONS))
             ERROR_EXIT(ANSI_COLOR_RED "Failed to listen for connections" ANSI_COLOR_RESET);
 
@@ -113,12 +113,12 @@ int main(int argc, char * const argv[]) {
     for (i = 0; i < all_rooms->number_of_rooms; i++) {
         free(all_rooms->rooms[i]);
     }
-	/* Free host IP memory. */
-	if (host)
-		free(host);
+    /* Free host IP memory. */
+    if (host)
+        free(host);
 
-	/* Destroy server structure. */
-	destroy_socket(server_socket);
+    /* Destroy server structure. */
+    destroy_socket(server_socket);
 
-	return 0;
+    return 0;
 }

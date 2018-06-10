@@ -8,18 +8,18 @@ socket_structure *create_socket(unsigned int buffer_size, unsigned short int por
     socket_struct->buffer = malloc(sizeof(char) * buffer_size);
     if (socket_struct->buffer == NULL)
         ERROR_EXIT(ANSI_COLOR_RED "Failed to init buffer" ANSI_COLOR_RESET);
-    
-    /* Create socket file descriptor. */    
+
+    /* Create socket file descriptor. */
     if ((socket_struct->fd = socket(server_type, SOCK_STREAM, protocol)) == -1)
         ERROR_EXIT(ANSI_COLOR_RED "Failed to create socket" ANSI_COLOR_RESET);
 
     if (op == SERVER) {
-	    /* Server configuration. */
-	    int aux = 1;
-	    int ret = setsockopt(socket_struct->fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &aux, sizeof(aux));
-	    if (ret)
-	        ERROR_EXIT(ANSI_COLOR_RED "Failed at server configuration" ANSI_COLOR_RESET);
-	}
+        /* Server configuration. */
+        int aux = 1;
+        int ret = setsockopt(socket_struct->fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &aux, sizeof(aux));
+        if (ret)
+            ERROR_EXIT(ANSI_COLOR_RED "Failed at server configuration" ANSI_COLOR_RESET);
+    }
 
     /* Define the server address. */
     socket_struct->address.sin_family = server_type;
@@ -36,7 +36,7 @@ int attach_server(socket_structure * socket_struct, unsigned short int port) {
     /* Bind server to the specified port. */
     int ret = bind(socket_struct->fd, (struct sockaddr *) &socket_struct->address, sizeof(struct sockaddr_in));
 
-    /* From man: "On success, zero is returned.  
+    /* From man: "On success, zero is returned.
     On error, -1 is returned, and errno is set appropriately. "*/
     if (ret)
         ERROR_EXIT(ANSI_COLOR_RED "Failed to bind server to specified PORT." ANSI_COLOR_RESET);
@@ -45,41 +45,41 @@ int attach_server(socket_structure * socket_struct, unsigned short int port) {
 }
 
 void connect_server(socket_structure *client_socket, char *server_adress, char *port) {
-	if (connect(client_socket->fd, (struct sockaddr *) &client_socket->address, sizeof(struct sockaddr_in)))
+    if (connect(client_socket->fd, (struct sockaddr *) &client_socket->address, sizeof(struct sockaddr_in)))
         ERROR_EXIT(ANSI_COLOR_RED "Failed to connect to server." ANSI_COLOR_RESET);
-    else 
+    else
         printf(ANSI_COLOR_GREEN "Connection established with the server %s on port %s...\n" ANSI_COLOR_RESET, server_adress, port);
 }
 
 void destroy_socket(socket_structure *socket_struct) {
-	/* Free memory allocated for all socket structure. */
-	if (socket_struct == NULL) 
-		return;
+    /* Free memory allocated for all socket structure. */
+    if (socket_struct == NULL)
+        return;
 
-	close(socket_struct->fd);
+    close(socket_struct->fd);
 
-	if (socket_struct->buffer)
-		free(socket_struct->buffer);		    
+    if (socket_struct->buffer)
+        free(socket_struct->buffer);
 
-	free(socket_struct);	
+    free(socket_struct);
 }
 
-char *getIP() {	
-	struct ifaddrs *ifaddr, *ifa;
-	int family, socket_struct;
-	char *host = malloc(sizeof(char) * (1 + NI_MAXHOST));
+char *getIP() {
+    struct ifaddrs *ifaddr, *ifa;
+    int family, socket_struct;
+    char *host = malloc(sizeof(char) * (1 + NI_MAXHOST));
 
-	if (getifaddrs(&ifaddr) == -1)
-		ERROR_EXIT(ANSI_COLOR_RED "Failed at getting IP." ANSI_COLOR_RESET);	
+    if (getifaddrs(&ifaddr) == -1)
+        ERROR_EXIT(ANSI_COLOR_RED "Failed at getting IP." ANSI_COLOR_RESET);
 
-	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-		family = ifa->ifa_addr->sa_family;
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        family = ifa->ifa_addr->sa_family;
 
-		if (family == AF_INET) {
-			socket_struct = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-			if (socket_struct != 0)
-				ERROR2_EXIT(ANSI_COLOR_RED "getnameinfo() failed: %s\n" ANSI_COLOR_RESET, gai_strerror(socket_struct));											
-		}
-	}
-	return host; 
+        if (family == AF_INET) {
+            socket_struct = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+            if (socket_struct != 0)
+                ERROR2_EXIT(ANSI_COLOR_RED "getnameinfo() failed: %s\n" ANSI_COLOR_RESET, gai_strerror(socket_struct));
+        }
+    }
+    return host;
 }
