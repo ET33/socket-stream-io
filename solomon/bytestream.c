@@ -62,6 +62,82 @@
 	care of the rest without extern interference.
 */
 
+static char *readline(FILE *fp) {
+	/*
+		Gets a file data line.
+	*/
+
+	// 128 bytes initally for the file line is
+	// a heuristic to speed up the process. Is is
+	// application dependent.
+	const unsigned int initial_size = 128;
+
+        char *line = malloc(sizeof(char) * (1 + initial_size)), c = 0;
+        unsigned long int counter = 0, cur_size = initial_size;
+    
+        while (c != EOF && c != '\r' && c != '\n') {
+                c = fgetc(fp);
+
+		// Double the line size. Again, it is a heuristic to
+		// speed up the process.
+                if (counter == cur_size-1) {
+                        cur_size *= 2;
+                        line = realloc(line, sizeof(char) * (1 + cur_size));
+                }
+                line[counter] = c;
+                counter++;
+
+        }
+
+        if (counter > 1) {
+                line = realloc(line, sizeof(char) * (1 + counter));
+                line[counter - 1] = '\0';
+                return line;
+        }
+
+	free(line);
+	return NULL;
+}
+
+static char **get_file_list(char *directory, unsigned long int *size) {
+	/*
+		Invokes "ls" command on the given directory
+		and return a list with the filenames
+	*/
+
+        char ls_command[] = "/bin/ls ";
+        char *command = malloc(sizeof(char) *
+                (1 + strlen(ls_command) + strlen(directory)));
+
+        if (command == NULL)
+                return NULL;
+
+	// Concatenates the ls command with the given directory
+	// filepath
+	sprintf(command, "%s%s", ls_command, directory);
+
+        char **microaudio_list = NULL, *aux = NULL;
+        *size = 0;
+
+        FILE *fp = popen(command, "r");
+        if (fp != NULL) {
+		while (!feof(fp)) {
+			// Get a "ls" output line (file name)
+			aux = readline(fp);
+			if (aux) {
+				microaudio_list = realloc(microaudio_list,
+					sizeof(char *) * (1 + *size));
+				microaudio_list[*size] = aux;
+				(*size)++;
+			}
+		}
+                pclose(fp);
+        }
+
+        free(command);
+        return microaudio_list;
+}
+
 static void *play_microaudios(void *vargs) {
 	/*
 		This function has the task of
@@ -72,29 +148,43 @@ static void *play_microaudios(void *vargs) {
 	args_struct *args = (args_struct *) vargs;
 	int *process_end = args->process_end;
 	char *temp_dir_path = args->temp_dir_path;
+	const unsigned long int temp_dir_path_len = strlen(temp_dir_path);
 
-	// Command used to play each microaudio
-	char aplayCommand[] = "aplay ";
-	const unsigned long int aplaySize = strlen(aplayCommand);
+	char *command = NULL;
+	char **temp_dir_ls = NULL;
+	unsigned long int microaudio_counter = 0;
 
-	char *command = NULL, *filepath = NULL;
 	// Repeat til program process runs off
 	while (!(*process_end)) {
+		// Get file list from the temporary microaudio subdirectory
+		// already in the correct play order
+		temp_dir_ls = get_file_list(temp_dir_path, &microaudio_counter);
 
-				// "aplay " size 
-				// + filepath size 
-				// + null terminator character
-				//command = malloc(sizeof(char) * (aplaySize + strlen(filepath) + 1));
+		// For each microaudio file...
+		for (register unsigned long int i = 0; i < microaudio_counter; i++) {
+			// The full command is 
+			// "aplay <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
+			command = malloc(sizeof(char) * 
+				(PLAY_MICROAUDIO_CMD_SIZE + 2*(temp_dir_path_len + strlen(temp_dir_ls[i])) + 1));
 
-				// Concatenate "aplay " with given filepath
-				//strcpy(command, aplayCommand);
-				//strcat(command + aplaySize, filepath); 
-				// Play sound on the given filepath
-				// Check if command correspondent audio
-				// microfile exists and play it right here
-				// (to do!)
-				// system(command);
-				//free(command);
+			// Concatenate "aplay " with complete microaudio filepath
+			// in command variable
+			sprintf(command, 
+				"aplay %s%s && rm %s%s", 
+				temp_dir_path, temp_dir_ls[i], 
+				temp_dir_path, temp_dir_ls[i]);
+
+			// Play sound on the given filepath
+			system(command);
+			printf("removed with: %s\n", command);
+
+			// Free some memory allocated
+			free(command);
+			free(temp_dir_ls[i]);
+		}
+
+		// Free temp_dir_ls memory
+		free(temp_dir_ls);
 	}	
 
 	return NULL;
@@ -133,7 +223,6 @@ static void *process_ready_queue(void *vargs) {
 		if (q_size(ready_q)) {
 			microaudio = q_pop(ready_q);
 			if (microaudio) {
-				printf("here?\n");
 				microaudio_filepath = malloc(sizeof(char) *
 					(1 + temp_dir_path_len + MAX_COUNTER_LEN));
 
