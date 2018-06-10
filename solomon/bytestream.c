@@ -51,8 +51,7 @@ static void *process_ready_queue(void *vargs) {
 				// "aplay " size 
 				// + filepath size 
 				// + null terminator character
-				command = malloc(sizeof(char) * 
-					(aplaySize + strlen(filepath) + 1));
+				command = malloc(sizeof(char) * (aplaySize + strlen(filepath) + 1));
 
 
 				// Concatenate "aplay " with given filepath
@@ -109,8 +108,7 @@ static void *update_ready_queue(void *vargs) {
 			// a dynamic memory region because the
 			// cur_data_unit memory region will be
 			// soon cleaned up at the end of this "if".
-			filepath = malloc(sizeof(char) * 
-				(1 + strlen(cur_data_unit->description)));
+			filepath = malloc(sizeof(char) * (1 + strlen(cur_data_unit->description)));
 
 			strcpy(filepath, cur_data_unit->description);
 			
@@ -162,17 +160,8 @@ void processSounds(data_unit *cur_data_unit, int *process_end) {
 	};
 
 	// Create threads
-	pthread_create(
-		thread_id + 0, 
-		NULL, 
-		process_ready_queue, 
-		(void *) &args);
-
-	pthread_create(
-		thread_id + 1, 
-		NULL, 
-		update_ready_queue, 
-		(void *) &args);
+	pthread_create(thread_id + 0, NULL, process_ready_queue, (void *) &args);
+	pthread_create(thread_id + 1, NULL, update_ready_queue, (void *) &args);
 
 	// Join (wait) threads terminate
 	pthread_join(thread_id[0], NULL);
