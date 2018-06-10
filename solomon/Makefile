@@ -7,7 +7,7 @@ sources:
 	@gcc -c *.c $(CFLAGS)
 
 clean:
-	@rm -rf *.o server client queue solomon.zip 
+	@rm -rf *.o server client solomon.zip 
 
 zip:
 	@rm -rf solomon.zip

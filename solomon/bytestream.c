@@ -126,12 +126,11 @@ static void *update_ready_queue(void *vargs) {
 		If the first key at the aux_q is the next data unit,
 		append it to the ready_q.
 
-		()
 		[...][n+k][n] --(?)--> 
 			[n-1][n-2][...][1] --q_pop()--> 
 				PlaySound()
 		*/
-		if (q_key_first(aux_q) == 1 + q_key_last(ready_q)) {
+		if (q_size(ready_q) == 0 || q_key_first(aux_q) == 1 + q_key_last(ready_q)) {
 			filepath = q_pop(aux_q);
 			key = q_key_first(aux_q);
 			q_insert(ready_q, key, filepath);
