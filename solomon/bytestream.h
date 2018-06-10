@@ -25,23 +25,23 @@
 #define PLAY_MICROAUDIO_CMD_SIZE 13
 
 enum {
-	PROCESS_READY_QUEUE,
-	UPDATE_READY_QUEUE,
-	PLAY_MICROAUDIOS,
-	THREAD_NUM
+    PROCESS_READY_QUEUE,
+    UPDATE_READY_QUEUE,
+    PLAY_MICROAUDIOS,
+    THREAD_NUM
 };
 
 typedef struct {
-	queue *ready_q;
-	data_unit *cur_data_unit;
-	int *process_end;
-	char *temp_dir_path;
+    queue *ready_q;
+    data_unit *cur_data_unit;
+    int *process_end;
+    char *temp_dir_path;
 } args_struct;
 
 typedef struct {
-	// Thread vector
-	pthread_t thread_id[THREAD_NUM];
-	args_struct args;
+    // Thread vector
+    pthread_t thread_id[THREAD_NUM];
+    args_struct args;
 } sound_struct;
 
 // Function declaration
