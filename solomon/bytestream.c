@@ -41,7 +41,6 @@ static void *process_ready_queue(void *vargs) {
 		
 		// If there's something to play...
 		if (q_size(ready_q)) {
-			printf("debug: %d\n", q_size(ready_q));
 			filepath = q_pop(ready_q);
 			if (filepath) {
 				// "aplay " size 
@@ -59,8 +58,6 @@ static void *process_ready_queue(void *vargs) {
 				// microfile exists and play it right here
 				// (to do!)
 				//syscall(command);
-
-				printf("(consider playing audio now) test: %s\n", command);
 
 				// Free system used memory
 				free(filepath);
@@ -148,6 +145,10 @@ static void *update_ready_queue(void *vargs) {
 
 void destroy_sound_struct (sound_struct *ss) {
 	if (ss) {
+		if ((ss->thread_id)[0])
+			pthread_exit(ss->thread_id + 0);
+		if ((ss->thread_id)[1])
+			pthread_exit(ss->thread_id + 1);
 		if (ss->args.ready_q)
 			q_destroy(ss->args.ready_q);
 		free(ss);
