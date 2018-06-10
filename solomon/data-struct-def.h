@@ -27,7 +27,8 @@ enum{
     SERVER,
     CLIENT,
     RECONNECT,
-    PATH
+    PATH,
+    HELP
 };
 
 /* Basic data transfer between client and server. */
