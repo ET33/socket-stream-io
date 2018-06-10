@@ -66,11 +66,12 @@ data_unit process_commands(data_unit msg) {
 	switch(msg.control_id) {
 		case HELP:
 			printf("List of controls. \n");
-			printf("HELP - \n");
-			printf("LIST - \n");
-			printf("PLAY - \n");
-			printf("STOP - \n");
-			printf("EXIT - \n");			
+			printf("HELP - List all the commands supported by this program.\n");
+			printf("LIST - List all the music tracks avaiable on the server. \n");
+			printf("PLAY - Play the first music track available on the server. \n");
+			printf("PlAY NR_TRACK - Play a specific music by a valid track number. \n");
+			printf("STOP - Stop the player from playing the music and the server from sending it.\n");
+			printf("EXIT - Disconnect from the server and exit the program. \n");			
 			break;
 
 		case LIST:
