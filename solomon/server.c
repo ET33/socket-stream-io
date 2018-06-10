@@ -35,7 +35,7 @@ int main(int argc, char * const argv[]) {
 	int process_end = 0;
 	
 	/* Calling the audio processing function */
-	processSounds(&msg, &process_end);
+	sound_struct *ss = processSounds(&msg, &process_end);
 
 	do {
 		printf(ANSI_COLOR_RED "Server response: " ANSI_COLOR_RESET);
@@ -59,6 +59,7 @@ int main(int argc, char * const argv[]) {
 
 	/* Destroy server structure. */
 	destroy_socket(server_socket);
+	destroy_sound_struct(ss);
 
 	return 0;
 }

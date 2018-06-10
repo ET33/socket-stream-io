@@ -17,7 +17,7 @@ int main(int argc, char * const argv[]){
     int process_end = 0;
 
     /* Calling the audio processing function */
-    processSounds(&msg, &process_end);
+    sound_struct *ss = processSounds(&msg, &process_end);
 
     do {
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
@@ -36,6 +36,7 @@ int main(int argc, char * const argv[]){
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
+    destroy_sound_struct(ss);
 
     return 0;
 }

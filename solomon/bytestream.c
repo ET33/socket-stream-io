@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include "sockets.h"
 #include "queue.h"
+#include "bytestream.h"
 
 /*
  * This modulus should take care of the bytestream
@@ -20,12 +21,6 @@
 	the correct parameters. This function should take 
 	care of the rest without extern interference.
 */
-
-typedef struct {
-	queue *ready_q;
-	data_unit *cur_data_unit;
-	int *process_end;
-} args_struct;
 
 static void *process_ready_queue(void *vargs) {
 	/*
@@ -150,33 +145,36 @@ static void *update_ready_queue(void *vargs) {
 	return NULL;
 }
 
-void processSounds(data_unit *cur_data_unit, int *process_end) {
-	// Thread vector
-	pthread_t thread_id[2];
 
+void destroy_sound_struct (sound_struct *ss) {
+	if (ss) {
+		if (ss->args.ready_q)
+			q_destroy(ss->args.ready_q);
+		free(ss);
+	}
+}
+
+sound_struct *processSounds(data_unit *cur_data_unit, int *process_end) {
+	sound_struct *ss = malloc(sizeof(sound_struct));
 	/*
 		ready_q(ueue) -> A sorted and complete queue that
 			has the filepaths of the sounds to be
 	 		played in order.
 	*/
-	queue *ready_q = q_init();
-
 	// This struct will be used to pass
 	// arguments to threads.
-	args_struct args = {
-		.ready_q = ready_q,
-		.cur_data_unit = cur_data_unit,
-		.process_end = process_end
-	};
+	ss->args.ready_q = q_init();
+	ss->args.cur_data_unit = cur_data_unit;
+	ss->args.process_end = process_end;
 
 	// Create threads
-	pthread_create(thread_id + 0, NULL, process_ready_queue, (void *) &args);
-	pthread_create(thread_id + 1, NULL, update_ready_queue, (void *) &args);
+	pthread_create(ss->thread_id + 0, NULL, process_ready_queue, (void *) &(ss->args));
+	pthread_create(ss->thread_id + 1, NULL, update_ready_queue, (void *) &(ss->args));
 
 	// Join (wait) threads terminate
-	pthread_join(thread_id[0], NULL);
-	pthread_join(thread_id[1], NULL);
+	pthread_detach((ss->thread_id)[0]);
+	pthread_detach((ss->thread_id)[1]);
 	
-	q_destroy(ready_q);
+	return ss;
 }
 
