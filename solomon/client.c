@@ -21,7 +21,7 @@ int main(int argc, char * const argv[]){
     int process_end = 0;
 
     /* Calling the audio processing function */
-    sound_struct *ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR);
+    sound_struct *ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR, 1);
 
     do {
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 

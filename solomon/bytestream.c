@@ -4,13 +4,53 @@
 #include "bytestream.h"
 
 /*
- * This modulus should take care of the bytestream
- * exchange between "server" and "client". It should:
- * -	Process data exchanged with the data_unit struct
- * -	Organize the data accordingly to the id sequence
- * -	Take care of the temporary audio microfiles (to do)
- * - 	Play the sounds in the correct order (to do)
- */
+	This modulus should take care of the bytestream
+	exchange between "server" and "client". It should:
+	-	Process data exchanged with the data_unit struct
+	-	Organize the data accordingly to the id sequence
+	-	Take care of the temporary audio microfiles
+	- 	Play the sounds in the correct order
+
+
+	In this modulus there is four functions, each one
+	with a well-defined set of tasks. They work parallel
+	from each other, and uses the same data structure to
+	communicates in between.
+	
+	1. processSounds(...): 
+		Creates this modulus structure, with a
+		thread in detached (background) mode 
+		for every other function below, and return 
+		that structure in order to keep control of
+		these threads.
+
+	1.1. update_ready_queue(...):
+		This function get all the data received via
+		socket and translate it to this modulus
+		data unit, storing two sorted queues:
+		- ready_q: sorted and complete queue. Has
+		the microaudio content in the correct order
+		to be played.
+		- aux_q: the purpose of this queue is just
+		to support filling the ready_q correctly. 
+		It is a sorted and incomplete queue of data 
+		unit. If the first element of this queue is 
+		the next to be placed in the ready_q, pop 
+		element from aux_q and insert in ready_q.		
+
+	1.2. process_ready_queue(..):
+		This function has the task of collecting the
+		nodes from que ready_q and creating a tempo-
+		rary microaudio file for that piece of audio.
+
+	1.3. play_microaudios(...):
+		This function get all the microaudio files in
+		the temporary microaudio subdirectory and uses
+		a external program to play each one separatelly.
+
+*/
+
+
 
 /*
 	How to integrate with the current Client-Server
@@ -79,8 +119,8 @@ static void *process_ready_queue(void *vargs) {
 
 	// This counter will keep track of the current
 	// microaudio id, in order to create the correct
-	// microaudio filenames. I'm not worried
-	// what will happens on this counter overflow.
+	// microaudio filenames. The counter overflow is 
+	// not a worry.
 	// Just for quick reference, the max value of this
 	// thing is 18,446,744,073,709,551,615.
 	unsigned long long int microaudio_counter = 0;
@@ -209,6 +249,8 @@ void destroy_sound_struct (sound_struct *ss) {
 }
 
 void create_temp_microaudio_dir(char *path) {
+	// This function creates the temporary subdirectory
+	// created to keep microaudios.
 	char inst[] = "mkdir -p ";
 	char *command = malloc(sizeof(char) * 
 		(strlen(path) + strlen(inst) + 1));
@@ -219,6 +261,8 @@ void create_temp_microaudio_dir(char *path) {
 }
 
 void remove_temp_microaudio_dir(char *path) {
+	// This function removes the temporary subdirectory
+	// created to keep microaudios.
 	char inst[] = "rm -r ";
 	char *command = malloc(sizeof(char) * 
 		(strlen(path) + strlen(inst) + 1));
@@ -228,7 +272,7 @@ void remove_temp_microaudio_dir(char *path) {
 	free(command);
 }
 
-sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *temp_dir_path) {
+sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *temp_dir_path, int play_audio) {
 	sound_struct *ss = malloc(sizeof(sound_struct));
 	/*
 		ready_q(ueue) -> A sorted and complete queue that
@@ -245,13 +289,24 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *te
 	// Create threads
 	pthread_create(ss->thread_id + PROCESS_READY_QUEUE, NULL, process_ready_queue, (void *) &(ss->args));
 	pthread_create(ss->thread_id + UPDATE_READY_QUEUE, NULL, update_ready_queue, (void *) &(ss->args));
-	pthread_create(ss->thread_id + PLAY_MICROAUDIOS, NULL, play_microaudios, (void *) &(ss->args));
+
+	if (play_audio) {
+		// Should sounds be played as long as they received?
+		// This flag is supposed to be 0 (false) for the Server 
+		// and any other value (true) for every Client.
+		pthread_create(ss->thread_id + PLAY_MICROAUDIOS, NULL, play_microaudios, (void *) &(ss->args));
+	}
+
 
 	// Join (wait) threads terminate
 	pthread_detach((ss->thread_id)[PROCESS_READY_QUEUE]);
 	pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
-	pthread_detach((ss->thread_id)[PLAY_MICROAUDIOS]);
-	
+
+	if (play_audio) {
+		// Same discussion when creating PLAY_MICROAUDIOS thread.
+		pthread_detach((ss->thread_id)[PLAY_MICROAUDIOS]);
+	}
+
 	return ss;
 }
 
