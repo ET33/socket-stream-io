@@ -14,7 +14,9 @@ void process_data(data_unit data) {
 			break;
 
 		case MESSAGE:
-			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
+			printf("\n");
+			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);			
+			printf(ANSI_COLOR_MAGENTA "Client response:" ANSI_COLOR_RESET "\n");						
 			break;
 
 		case EXIT: /* The server is shutting down. */
@@ -117,34 +119,29 @@ data_unit process_commands(data_unit msg) {
 	return msg;
 }
 
-int main(int argc, char * const argv[]){
-    if (argc != 3) 
-		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
-    
-    /* Criando o socket client e especificando o endereço do servidor. */
-    socket_structure *client_socket = create_socket(BUFFER_SIZE, atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
+socket_structure *client_socket;
+int process_end = 0;
 
-    /* Estabelece conexão com o socket server. */
-    connect_server(client_socket, argv[1], argv[2]);
-    
-    /* Application section. */
-    data_unit msg = {0};
-    msg.control_id = MESSAGE;
-    msg.id = INVALID;
-    int process_end = 0;
+void *recv_data(void *args) {
+	data_unit msg = *((data_unit *) args);
 
-    /* Calling the audio processing function */
-    sound_struct *ss = processSounds(&msg, &process_end);
-
-    printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
-    printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the list of commands.\n");
-
-    do {    	
+	do {    	
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
             ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
         else 
-            process_data(msg);
-               
+            process_data(msg);                             
+        
+		if(msg.control_id == EXIT)
+			process_end = 1;	
+    } while (!process_end);
+
+    return NULL;
+}
+
+void *send_data(void *args) {
+	data_unit msg = *((data_unit *) args);
+
+	do {   	           
         printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
         scanf("%[^\n]%*c", msg.description);
         msg = process_commands(msg);
@@ -155,6 +152,36 @@ int main(int argc, char * const argv[]){
 		if(msg.control_id == EXIT)
 			process_end = 1;	
     } while (!process_end);
+
+    return NULL;
+}
+
+int main(int argc, char * const argv[]){
+    if (argc != 3) 
+		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
+    
+    /* Criando o socket client e especificando o endereço do servidor. */
+    client_socket = create_socket(BUFFER_SIZE, atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
+
+    /* Estabelece conexão com o socket server. */
+    connect_server(client_socket, argv[1], argv[2]);
+    
+    /* Application section. */
+    data_unit msg = {0};
+    msg.control_id = MESSAGE;
+    msg.id = INVALID;    
+
+    /* Calling the audio processing function */
+    sound_struct *ss = processSounds(&msg, &process_end);
+
+    printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
+    printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the list of commands.\n");
+
+    /* Making asynchronous communication. */
+    pthread_t recv_thread, send_thread;
+    pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
+    pthread_create(&send_thread, NULL, send_data, (void *) &msg);
+	pthread_join(recv_thread, NULL);    
 
     /* Encerra a conexão do socket. */
     destroy_socket(client_socket);    
