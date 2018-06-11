@@ -88,10 +88,10 @@ data_unit process_commands(data_unit msg) {
     /* Case insensitive compare. */
     if (strcasecmp(str[0], "HELP") == 0 && i == 1) {
     	msg.control_id = HELP;
-    } else if (strcasecmp(str[0], "PATH") == 0 && i == 2) {
-    	msg.control_id = PATH;
-    } else if (strcasecmp(str[0], "NUSERS") == 0 && i == 1) {
-    	msg.control_id = NUSERS;
+    // } else if (strcasecmp(str[0], "PATH") == 0 && i == 2) {
+    	// msg.control_id = PATH;
+    // } else if (strcasecmp(str[0], "NUSERS") == 0 && i == 1) {
+    	// msg.control_id = NUSERS;
     } else if (strcasecmp(str[0], "EXIT") == 0 && i == 1) {
     	msg.control_id = EXIT;
     } else {
@@ -101,19 +101,19 @@ data_unit process_commands(data_unit msg) {
     switch (msg.control_id) {
     	case HELP:
     		printf("List of commands.\n");
-    		printf("PATH PATH_MUSICS - Define the path of musics folder. \n");
-    		printf("NUSER - Number of clients connected. \n");
+    		// printf("PATH PATH_MUSICS - Define the path of musics folder. \n");
+    		// printf("NUSER - Number of clients connected. \n");
     		printf("EXIT - Disconnect the server and exit the program. \n");
     		break;
 
-    	case PATH:
+    	// case PATH:
     		/* Get the path from the user. */
-    		printf("Current path of musics: /\n");    		
-    		break;
+    		// printf("Current path of musics: /\n");    		
+    		// break;
 
-    	case NUSERS:
-    		printf("2 Clients Connected on the server\n");
-    		break;
+    	// case NUSERS:
+    		// printf("2 Clients Connected on the server\n");
+    		// break;
 
     	case EXIT:
     		printf("Disconnecting...\n");			
