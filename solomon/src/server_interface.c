@@ -34,9 +34,8 @@ file_units_struct *break_file(char *filepath) {
 		bytes_read = fread(msgs[data_unit_counter]->description, 
 			1, BUFFER_SIZE, audio_file);
 
-		if (bytes_read < BUFFER_SIZE) {
-		    msgs[data_unit_counter]->description[bytes_read] = '\0';
-		}
+		if (bytes_read < BUFFER_SIZE)
+			msgs[data_unit_counter]->description[bytes_read] = '\0';		
 	}
 
 	fclose(audio_file);
@@ -51,14 +50,8 @@ void *server_send_data_units(void *vargs) {
 	server_args_struct *args = (server_args_struct *) vargs;
 
 	file_units_struct *messages = break_file(args->filepath);
-	for (register unsigned int i = 0; 
-		i < messages->number_of_data_units; i++) {
-		send(
-			args->server_socket->fd, 
-			messages->msgs[i], 
-			sizeof(data_unit), 
-			0);
-	}
+	for (register unsigned int i = 0; i < messages->number_of_data_units; i++)
+		send(args->server_socket->fd, messages->msgs[i], sizeof(data_unit), 0);	
 
 	return NULL;
 }
@@ -80,14 +73,13 @@ data_unit process_commands(data_unit msg) {
 	}
 
 	/* Case insensitive compare. */
-	if (strcasecmp(str[0], "HELP") == 0 && i == 1) {
+	if (strcasecmp(str[0], "HELP") == 0 && i == 1)
 		msg.control_id = HELP;
-	} else if (strcasecmp(str[0], "EXIT") == 0 && i == 1) {
+	else if (strcasecmp(str[0], "EXIT") == 0 && i == 1)
 		msg.control_id = EXIT;
-	} else {
+	else
 		msg.control_id = INVALID;
-	}
-
+	
 	switch (msg.control_id) {
 		case HELP:
 			printf("List of commands.\n");
@@ -103,6 +95,9 @@ data_unit process_commands(data_unit msg) {
 			break;
 	}
 
+	/* Temp memory free. */
+	free(str);
+
 	return msg;
 }
 
@@ -111,17 +106,15 @@ void process_data(server_args_struct *args){
 	unsigned long int number_of_files;
 	data_unit data = args->msg;
 
-	char **list_of_files = get_file_list(
-		args->music_dir, 
-		&number_of_files);
+	char **list_of_files = get_file_list(args->music_dir, &number_of_files);
 
 	pthread_t thread_ids[number_of_files];
 
 	switch(data.control_id) {
 		case PLAY:
-			for (register unsigned int i = 0; i < number_of_files; i++) {
-				pthread_create(thread_ids + i, NULL, server_send_data_units, list_of_files[i]);				
-			}
+			for (register unsigned int i = 0; i < number_of_files; i++)
+				pthread_create(thread_ids + i, NULL, server_send_data_units, list_of_files[i]);			
+			
 			strcpy(data.description, "Playing...");
 			data.control_id = MESSAGE;
 			send(args->new_socket, &data, sizeof(data), 0);
@@ -175,15 +168,11 @@ void *server_recv_data(void *vargs) {
 	do {    	
 		/* Recebendo a msg do cliente. */
 		if (recv(args->new_socket, &args->msg, sizeof(args->msg), 0) == -1)
-			ERROR_EXIT(
-				ANSI_COLOR_RED 
-				"Error on receiving data from client" 
-				ANSI_COLOR_RESET);
-		else {
+			ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from client" ANSI_COLOR_RESET);
+		else 
 			process_data(args);
-		}
-        
-		if(args->msg.control_id == EXIT) {
+		        
+		if (args->msg.control_id == EXIT) {
 			args->process_end = 1;	
 			pthread_exit(NULL);
 		}
@@ -198,38 +187,26 @@ void *server_send_data(void *vargs) {
 	char *command = NULL;
 
 	do {
-                if (args->msg.control_id != EXIT &&
-                        args->msg.control_id != MESSAGE_NOANS) {
-			printf(
-				ANSI_COLOR_RED 
-				"Server response: " 
-				ANSI_COLOR_RESET);
-                }
-      
+		if (args->msg.control_id != EXIT &&	args->msg.control_id != MESSAGE_NOANS)
+			printf(ANSI_COLOR_RED "Server response: " ANSI_COLOR_RESET);
 
-                // Avoids buffer overflow
-                command = readline(stdin);
-                if (command) {
-                        strncpy(
-                                args->msg.description,
-                                command,
-                                MIN(BUFFER_SIZE-1, strlen(command)));
-                        args->msg.description[BUFFER_SIZE-1] = '\0';
-                        free(command);
-                }
+		// Avoids buffer overflow
+		command = readline(stdin);
+		if (command) {
+			strncpy(args->msg.description, command,	MIN(BUFFER_SIZE-1, strlen(command)));
+			args->msg.description[MIN(BUFFER_SIZE-1, strlen(command))] = '\0';
+			free(command);
+		}
 
-                if (args->msg.description != NULL &&
-                        strlen(args->msg.description) > 1) {
-                        args->msg = process_commands(args->msg);
-                } else {
-                        args->msg.control_id = INVALID;
-                }
-
-		/* Enviando a msg para o cliente. */
-		if (args->msg.control_id != INVALID && 
-			args->msg.control_id != HELP)
-			send(args->new_socket, &args->msg, sizeof(args->msg), 0);            			
+		if (args->msg.description[0] != '\0' && strlen(args->msg.description) > 0)
+			args->msg = process_commands(args->msg);
+		else
+			args->msg.control_id = INVALID;
 		
+		/* Enviando a msg para o cliente. */
+		if (args->msg.control_id != INVALID && args->msg.control_id != HELP)
+			send(args->new_socket, &args->msg, sizeof(args->msg), 0);            			
+
 		if (args->msg.control_id == EXIT) {
 			args->process_end = 1;	
 			pthread_exit(NULL);
@@ -239,4 +216,3 @@ void *server_send_data(void *vargs) {
 
 	return NULL;
 }
-
