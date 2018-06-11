@@ -129,12 +129,12 @@ data_unit process_commands(data_unit msg) {
 
 void process_data(data_unit data){
 	/* Execute the required operation. */
+	unsigned long int number_of_files;
+	char **list_of_files = get_file_list("../musics/", &number_of_files);
+	pthread_t thread_ids[number_of_files];
+	int i;
 	switch(data.control_id) {
 		case PLAY:
-			unsigned long int number_of_files;
-			char **list_of_files = get_file_list("../musics/", &number_of_files);
-			pthread_t thread_ids[number_of_files];
-			int i;
 			for (i = 0; i < number_of_files; i++) {
 				pthread_create(thread_ids + i, NULL, send_data_units, list_of_files[i]);				
 			}
