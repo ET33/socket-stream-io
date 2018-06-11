@@ -64,8 +64,8 @@ data_unit process_commands(data_unit msg) {
 		msg.control_id = LIST;
 	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1)
 		msg.control_id = PLAY;
-	else if (strcasecmp(str[0], "STOP") == 0 && i == 1)
-		msg.control_id = STOP;
+	// else if (strcasecmp(str[0], "STOP") == 0 && i == 1)
+		// msg.control_id = STOP;
 	else if (strcasecmp(str[0], "EXIT") == 0 && i == 1)
 		msg.control_id = EXIT;
 	else 
@@ -82,7 +82,7 @@ data_unit process_commands(data_unit msg) {
 			printf("LIST - List all the music tracks avaiable on the server. \n");
 			printf("PLAY - Play the first music track available on the server. \n");
 			//printf("PlAY NR_TRACK - Play a specific music by a valid track number. \n");
-			printf("STOP - Stop the player from playing the music and the server from sending it.\n");
+			// printf("STOP - Stop the player from playing the music and the server from sending it.\n");
 			printf("EXIT - Disconnect from the server and exit the program. \n");			
 			break;
 
@@ -99,10 +99,10 @@ data_unit process_commands(data_unit msg) {
 		// 	}
 		// 	break;
 
-		case STOP:
-			/* Parar o player. */
-			printf("Player Stopped. \n");
-			break;
+		// case STOP:
+		// 	/* Parar o player. */
+		// 	printf("Player Stopped. \n");
+		// 	break;
 
 		case INVALID:
 			printf("Invalid command.\n");
@@ -133,6 +133,7 @@ void *recv_data(void *args) {
 	data_unit msg = *((data_unit *) args);
 
 	do {    	
+		/* Receiving data from the server. */
         if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
             ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
         else 
@@ -159,7 +160,7 @@ void *send_data(void *args) {
         else
         	msg = process_commands(msg);        
         
-        /* Enviando msg para o servidor. */
+        /* Sending data to the server. */
 		if (msg.control_id != INVALID && msg.control_id != HELP)
 			send(client_socket->fd, &msg, sizeof(msg), 0);
 		if(msg.control_id == EXIT) {
