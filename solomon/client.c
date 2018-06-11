@@ -192,7 +192,7 @@ int main(int argc, char * const argv[]){
     msg.id = INVALID;    
 
     /* Calling the audio processing function */
-    sound_struct *ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR, 1);
+    ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR, 1);
 
     /* Making asynchronous communication. */    
     pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
