@@ -117,6 +117,9 @@ data_unit process_commands(data_unit msg) {
 			break;
 	}
 
+	/* Temp memory free. */
+	free(str);
+
 	return msg;
 }
 
@@ -169,7 +172,9 @@ void *send_data(void *vargs) {
 
 		if (args->msg.description != NULL && 
 			strlen(args->msg.description) > 1) {
+			printf("antes\n");
 			args->msg = process_commands(args->msg);
+			printf("depois\n");
 		} else {
 			args->msg.control_id = INVALID;
 		}
