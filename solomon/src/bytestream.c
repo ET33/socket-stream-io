@@ -253,12 +253,12 @@ static void *process_ready_queue(void *vargs) {
     task to fill the ready_q with the correct data
     blocks.
 */
-static void *update_ready_queue(void *vargs) {
+void *update_ready_queue(void *vargs) {
 
     args_struct *args = (args_struct *) vargs;
     queue *ready_q = args->ready_q;
     data_unit *cur_data_unit = args->cur_data_unit;
-    int *process_end = args->process_end;
+    //int *process_end = args->process_end;
     int key = 0;
 
     /*
@@ -266,16 +266,15 @@ static void *update_ready_queue(void *vargs) {
         appends the cur_data_unit and delivers
         the correct next data block to the ready_q.
     */
-    queue *aux_q = q_init();
+    queue *aux_q = args->aux_q;
 
     // Variable used to store the audio filepaths
     // given through the cur_data_unit inside the aux_q.
     char *bytestream_data = NULL;
 
     // Repeat til program process ends
-    while(!(*process_end)) {
-        if (cur_data_unit->control_id == MUSIC) {
-			printf("DEBUG: %d\n", cur_data_unit->id);	
+    //while(!(*process_end)) {
+        //if (cur_data_unit->control_id == MUSIC) {
             // It's necessary to transfer the content
             // of the cur_data_unit->description to
             // a dynamic memory region because the
@@ -289,13 +288,13 @@ static void *update_ready_queue(void *vargs) {
             
             // Expecting that "cur_data_unit"
             // isn't dinamically allocated.
-            cur_data_unit->control_id = INVALID;
+            // cur_data_unit->control_id = INVALID;
 
             // Caution: >>DON'T FREE<< bytestream_data!
             // Its dynamic memory region is
             // stored in the aux_q!
             bytestream_data = NULL;
-        }
+        //}
         
 
         // If there's something to process...
@@ -314,7 +313,7 @@ static void *update_ready_queue(void *vargs) {
                 q_insert(ready_q, key, bytestream_data);
             }
         }
-    }
+    //}
 
     q_destroy(aux_q);
     
@@ -377,13 +376,15 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *te
     // This struct will be used to pass
     // arguments to threads.
     ss->args.ready_q = q_init();
+    ss->args.aux_q = q_init();
     ss->args.cur_data_unit = cur_data_unit;
     ss->args.process_end = process_end;
     ss->args.temp_dir_path = temp_dir_path;
 
     // Create threads
     pthread_create(ss->thread_id + PROCESS_READY_QUEUE, NULL, process_ready_queue, (void *) &(ss->args));
-    pthread_create(ss->thread_id + UPDATE_READY_QUEUE, NULL, update_ready_queue, (void *) &(ss->args));
+   // pthread_create(ss->thread_id + UPDATE_READY_QUEUE, NULL, update_ready_queue, (void *) &(ss->args));
+   ss->thread_id[UPDATE_READY_QUEUE] = -1;
 
     if (play_audio) {
         // Should sounds be played as long as they received?
@@ -393,7 +394,7 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *te
     }
 
     pthread_detach((ss->thread_id)[PROCESS_READY_QUEUE]);
-    pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
+    //pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
 
     if (play_audio) {
         // Same discussion when creating PLAY_MICROAUDIOS thread.

@@ -3,7 +3,7 @@
 #include "client_interface.h"
 
 /* Process data send by the server. */
-void process_data(data_unit data) {
+void process_data(data_unit data, sound_struct *ss) {
 	/* Execute the required operation. */
 	switch(data.control_id) {		
 		case LIST:
@@ -11,6 +11,7 @@ void process_data(data_unit data) {
 			break;
 
 		case MUSIC:
+			update_ready_queue((void *) &(ss->args));
 			/* Play the track. */			
 			break;
 
@@ -111,23 +112,20 @@ data_unit process_commands(data_unit msg) {
 void *recv_data(void *vargs) {
 	client_args_struct *args = (client_args_struct *) vargs;
 
-	data_unit aux;
 	do {    	
 		/* Receiving data from the server. */
-		if (recv(args->client_socket->fd, &aux, sizeof(data_unit), 0) == -1) {
+		if (recv(args->client_socket->fd, &args->msg_recv, sizeof(data_unit), 0) == -1) {
 		    ERROR_EXIT(
 				ANSI_COLOR_RED 
 				"Error on receiving data from server\n" 
 				ANSI_COLOR_RESET);
 		} else {
 			printf("Message id: %d\nControl id: %d\n",
-				aux.id,
-				aux.control_id);
+				args->msg_recv.id,
+				args->msg_recv.control_id);
 				//, args->msg_recv.description);
-		    process_data(aux);
+		    process_data(args->msg_recv, args->ss);
 		}
-
-		args->msg_recv = aux;
 		
 		if(args->msg_recv.control_id == EXIT) {
 			args->process_end = 1;	
