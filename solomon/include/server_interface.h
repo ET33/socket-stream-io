@@ -23,7 +23,7 @@ typedef struct {
 void *server_send_data(void *vargs);
 void *server_recv_data(void *vargs);
 void process_data(server_args_struct *args);
-data_unit process_commands(data_unit msg);
+data_unit process_commands(data_unit msg, char *music_path);
 void *send_data_units(void *vargs);
 file_units_struct *break_file(char *filepath);
 

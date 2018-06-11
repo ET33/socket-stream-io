@@ -56,7 +56,10 @@ void *server_send_data_units(void *vargs) {
 	return NULL;
 }
 
-data_unit process_commands(data_unit msg) {
+data_unit process_commands(data_unit msg, char *music_path) {
+	unsigned long int number_of_files;	
+	char **list_of_files = get_file_list(music_path, &number_of_files);
+
 	char **str = malloc(sizeof(char **));
 	char *token = NULL;
 	char delim[] = " ,;\t";
@@ -77,14 +80,32 @@ data_unit process_commands(data_unit msg) {
 		msg.control_id = HELP;
 	else if (strcasecmp(str[0], "EXIT") == 0 && i == 1)
 		msg.control_id = EXIT;
+	else if (strcasecmp(str[0], "PATH") == 0 && i == 1)
+		msg.control_id = PATH;
+	else if (strcasecmp(str[0], "LIST") == 0 && i == 1)
+		msg.control_id = LIST;
 	else
 		msg.control_id = INVALID;
 	
 	switch (msg.control_id) {
 		case HELP:
 			printf("List of commands.\n");
+			printf("PATH - Print the path of musics folder. \n");
+			printf("LIST - List all the music tracks avaiable on the folder. \n");
 			printf("EXIT - Disconnect the server and exit the program. \n");
 			break;
+
+		case PATH:
+			printf("Musics folder path: %s\n", music_path);
+			msg.control_id = INVALID;
+			break;
+
+		case LIST:
+			printf("Music List:\n");
+			for (register unsigned int i = 0; i < number_of_files; i++)
+				printf("[%d] %s\n", i, list_of_files[i]);		
+			msg.control_id = INVALID;
+			break;	
 
 		case EXIT:
 			printf("Disconnecting...\n");			
@@ -199,7 +220,7 @@ void *server_send_data(void *vargs) {
 		}
 
 		if (args->msg.description[0] != '\0' && strlen(args->msg.description) > 0)
-			args->msg = process_commands(args->msg);
+			args->msg = process_commands(args->msg, args->music_dir);
 		else
 			args->msg.control_id = INVALID;
 		
