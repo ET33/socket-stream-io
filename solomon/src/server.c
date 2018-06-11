@@ -67,9 +67,6 @@ int main(int argc, char * const argv[]) {
 		ANSI_COLOR_YELLOW " HELP " ANSI_COLOR_RESET 
 		"for command list.\n");
 
-	args.msg.control_id = GREETINGS;
-	send(args.new_socket, &args.msg, sizeof(args.msg), 0);
-
 	/* Free host IP memory. */
 	if (host)
 		free(host);

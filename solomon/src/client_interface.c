@@ -6,17 +6,6 @@
 void process_data(data_unit data) {
 	/* Execute the required operation. */
 	switch(data.control_id) {		
-		case GREETINGS:
-			printf(
-				"Welcome to" 
-				ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET 
-				", a streaming socket audio player.\n");        
-			printf(
-				"Type " 
-				ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET 
-				" to see the command list.\n");
-			break;
-
 		case LIST:
 			printf("%s\n", data.description);
 			break;
@@ -122,6 +111,8 @@ data_unit process_commands(data_unit msg) {
 			break;
 	}
 
+	free(str);
+
 	return msg;
 }
 
@@ -152,6 +143,9 @@ void *send_data(void *vargs) {
 	client_args_struct *args = (client_args_struct *) vargs;
 	char *command = NULL;
 
+	printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
+	printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
+	
 	do {   	           
 		if (args->msg.control_id != EXIT && 
 			args->msg.control_id != MESSAGE_NOANS) {
