@@ -184,13 +184,16 @@ int main(int argc, char * const argv[]) {
 	else
 		printf(ANSI_COLOR_GREEN "Connection accepted.\n" ANSI_COLOR_RESET);
 
+	// Creates a temporary microaudio file for SERVER
+	create_temp_microaudio_dir(TEMP_SERVER_DIR);
+
 	/* Application section. */
 	data_unit msg = {0};
 	msg.control_id = MESSAGE;
 	msg.id = INVALID;	
 	
 	/* Calling the audio processing function */
-	ss = processSounds(&msg, &process_end);
+	sound_struct *ss = processSounds(&msg, &process_end, TEMP_SERVER_DIR, 0);
 
 	printf("Welcome to " ANSI_COLOR_CYAN "Theodora" ANSI_COLOR_RESET " music server socket stream!\nType" ANSI_COLOR_YELLOW " HELP " ANSI_COLOR_RESET "for command list.\n");
 
@@ -209,6 +212,7 @@ int main(int argc, char * const argv[]) {
 	/* Destroy server structure. */
 	destroy_socket(server_socket);
 	destroy_sound_struct(ss);
+	remove_temp_microaudio_dir(TEMP_SERVER_DIR);
 
 	return 0;
 }
