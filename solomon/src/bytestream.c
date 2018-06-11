@@ -275,6 +275,7 @@ static void *update_ready_queue(void *vargs) {
     // Repeat til program process ends
     while(!(*process_end)) {
         if (cur_data_unit->control_id == MUSIC) {
+			printf("DEBUG: %d\n", cur_data_unit->id);	
             // It's necessary to transfer the content
             // of the cur_data_unit->description to
             // a dynamic memory region because the
