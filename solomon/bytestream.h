@@ -13,6 +13,7 @@
 // for a single server.
 #define TEMP_CLIENT_DIR "./.CLIENT_DIR/"
 
+// Max digits of a UNSIGNED LONG LONG INT
 // Calculated as 
 //	  ceil(log10(1 + MAX_UNSIGNED_LONG_LONG_INT))
 // 	= ceil(log10(1 + 18.446.744.073.709.551.615))

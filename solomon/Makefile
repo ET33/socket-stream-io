@@ -1,7 +1,7 @@
 CFLAGS= -Wall -g -l pthread
 all: clean sources
-	@gcc queue.o bytestream.o sockets.o client.o -o client $(CFLAGS)
-	@gcc queue.o bytestream.o sockets.o server.o -o server $(CFLAGS)
+	@gcc queue.o bytestream.o sockets.o client_interface.o client.o -o client $(CFLAGS)
+	@gcc queue.o bytestream.o sockets.o server_interface.o server.o -o server $(CFLAGS)
 
 sources:	
 	@gcc -c *.c $(CFLAGS)
