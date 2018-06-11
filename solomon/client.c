@@ -32,11 +32,14 @@ void process_data(data_unit data) {
 			/* Play the track. */			
 			break;
 
+		case MESSAGE_NOANS: /* <- that's designedly, don't change unless you know what you're doing. */
 		case MESSAGE:
 			printf("\n");
-			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
-			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);			
-			fflush(stdout);
+			printf(
+				ANSI_COLOR_BLUE 
+				"Server response:" 
+				ANSI_COLOR_RESET " %s\n", 
+				data.description);
 			break;
 
 		case EXIT: /* The server is shutting down. */
@@ -156,7 +159,8 @@ void *send_data(void *vargs) {
 	char *command = NULL;
 
 	do {   	           
-		if (args->msg.control_id != EXIT) {
+		if (args->msg.control_id != EXIT && 
+			args->msg.control_id != MESSAGE_NOANS) {
 			printf(
 				ANSI_COLOR_MAGENTA 
 				"Client response: " 

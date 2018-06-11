@@ -159,7 +159,7 @@ void process_data(data_unit data){
 
 		case EXIT:
 			strcpy(data.description, "Thanks for using Theodora Music Stream!\n");
-			data.control_id = MESSAGE;
+			data.control_id = MESSAGE_NOANS;
 			send(new_socket, &data, sizeof(data), 0);
 			data.control_id = EXIT;
 			send(new_socket, &data, sizeof(data), 0);
