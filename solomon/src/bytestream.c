@@ -271,30 +271,30 @@ static void *update_ready_queue(void *vargs) {
 
     // Variable used to store the audio filepaths
     // given through the cur_data_unit inside the aux_q.
-    char *filepath = NULL;
+    char *bytestream_data = NULL;
 
     // Repeat til program process ends
     while(!(*process_end)) {
-        if (cur_data_unit->control_id == MUSIC && cur_data_unit->id != INVALID) {
+        if (cur_data_unit->control_id == MUSIC) {
             // It's necessary to transfer the content
             // of the cur_data_unit->description to
             // a dynamic memory region because the
             // cur_data_unit memory region will be
             // soon cleaned up at the end of this "if".
-            filepath = malloc(sizeof(char) * (1 + strlen(cur_data_unit->description)));
+            bytestream_data = malloc(sizeof(char) * (1 + strlen(cur_data_unit->description)));
 
-            strcpy(filepath, cur_data_unit->description);
+            strcpy(bytestream_data, cur_data_unit->description);
             
-            q_sort_insert(aux_q, cur_data_unit->id, filepath);
+            q_sort_insert(aux_q, cur_data_unit->id, bytestream_data);
             
             // Expecting that "cur_data_unit"
             // isn't dinamically allocated.
-            cur_data_unit->id = INVALID;
+            cur_data_unit->control_id = INVALID;
 
-            // Caution: >>DON'T FREE<< filepath!
+            // Caution: >>DON'T FREE<< bytestream_data!
             // Its dynamic memory region is
             // stored in the aux_q!
-            filepath = NULL;
+            bytestream_data = NULL;
         }
         
 
@@ -309,9 +309,9 @@ static void *update_ready_queue(void *vargs) {
                     PlaySound()
             */
             if (q_size(ready_q) == 0 || q_key_first(aux_q) == 1 + q_key_last(ready_q)) {
-                filepath = q_pop(aux_q);
+                bytestream_data = q_pop(aux_q);
                 key = q_key_first(aux_q);
-                q_insert(ready_q, key, filepath);
+                q_insert(ready_q, key, bytestream_data);
             }
         }
     }

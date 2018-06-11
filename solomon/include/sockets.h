@@ -20,7 +20,7 @@ define constant. */
 /* Define and typedef section. */
 #define ERROR_EXIT(STR) ({perror(STR); exit(EXIT_FAILURE);})
 #define ERROR2_EXIT(STR, ARGS) ({fprintf(stderr, STR, ARGS); exit(EXIT_FAILURE);})
-#define BUFFER_SIZE 		1024*1024
+#define BUFFER_SIZE 		 (1024*1024)
 #define SERVER_TYPE 		AF_INET
 #define NUM_CONNECTIONS		1
 #define PROTOCOL 		0

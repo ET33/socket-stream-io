@@ -7,7 +7,7 @@ typedef struct {
 	sound_struct *ss;
 	int process_end;
 	pthread_t recv_thread, send_thread;
-	data_unit msg;
+	data_unit msg_recv, msg_send;
 } client_args_struct;
 
 // Function declaration

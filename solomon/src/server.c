@@ -38,7 +38,7 @@ int main(int argc, char * const argv[]) {
 	}
 	
 	/* Create client socket. */	
-	if ((args.new_socket = accept(args.server_socket->fd, NULL, NULL)) == -1) {
+	if ((args.client_socket = accept(args.server_socket->fd, NULL, NULL)) == -1) {
 		ERROR_EXIT(
 			ANSI_COLOR_RED 
 			"Failed to accept client" 
@@ -51,15 +51,17 @@ int main(int argc, char * const argv[]) {
 	}
 
 	/* Application section. */
-	args.msg.control_id = MESSAGE;
-	args.msg.id = INVALID;	
+	args.msg_recv.control_id = MESSAGE;
+	args.msg_recv.id = INVALID;	
+	args.msg_send.control_id = MESSAGE;
+	args.msg_send.id = INVALID;	
 	
 	/* Calling the audio processing function */
-	args.ss = processSounds(
-		&args.msg, 
-		&args.process_end, 
-		args.music_dir, 
-		0);
+	// args.ss = processSounds(
+	// 	&args.msg_recv, 
+	// 	&args.process_end, 
+	// 	args.music_dir, 
+	// 	0);
 
 	printf("Welcome to " 
 		ANSI_COLOR_CYAN "Theodora" ANSI_COLOR_RESET 
@@ -67,8 +69,8 @@ int main(int argc, char * const argv[]) {
 		ANSI_COLOR_YELLOW " HELP " ANSI_COLOR_RESET 
 		"for command list.\n");
 
-	args.msg.control_id = GREETINGS;
-	send(args.new_socket, &args.msg, sizeof(args.msg), 0);
+	args.msg_send.control_id = GREETINGS;
+	send(args.client_socket, &args.msg_send, sizeof(data_unit), 0);
 
 	/* Free host IP memory. */
 	if (host)

@@ -4,13 +4,13 @@
 // Define and typedefs section
 typedef struct {
 	socket_structure *server_socket;
-	int new_socket;
+	int client_socket;
 	sound_struct *ss;
 	int process_end;
 	pthread_t recv_thread, send_thread;
 	char *filepath;
 	char *music_dir;
-	data_unit msg;
+	data_unit msg_recv, msg_send;
 } server_args_struct;
 
 typedef struct {

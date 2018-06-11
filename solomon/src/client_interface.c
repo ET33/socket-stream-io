@@ -125,16 +125,20 @@ void *recv_data(void *vargs) {
 
 	do {    	
 		/* Receiving data from the server. */
-		if (recv(args->client_socket->fd, &args->msg, sizeof(args->msg), 0) == -1) {
+		if (recv(args->client_socket->fd, &args->msg_recv, sizeof(data_unit), 0) == -1) {
 		    ERROR_EXIT(
-			ANSI_COLOR_RED 
-			"Error on receiving data from server\n" 
-			ANSI_COLOR_RESET);
+				ANSI_COLOR_RED 
+				"Error on receiving data from server\n" 
+				ANSI_COLOR_RESET);
 		} else {
-		    process_data(args->msg);
+			printf("Message id: %d\nControl id: %d\n",
+				args->msg_recv.id,
+				args->msg_recv.control_id);
+				//, args->msg_recv.description);
+		    process_data(args->msg_recv);
 		}                       
 		
-		if(args->msg.control_id == EXIT) {
+		if(args->msg_recv.control_id == EXIT) {
 			args->process_end = 1;	
 			pthread_exit(NULL);
 		}
@@ -148,8 +152,8 @@ void *send_data(void *vargs) {
 	char *command = NULL;
 
 	do {   	           
-		if (args->msg.control_id != EXIT && 
-			args->msg.control_id != MESSAGE_NOANS) {
+		if (args->msg_send.control_id != EXIT && 
+			args->msg_send.control_id != MESSAGE_NOANS) {
 			printf(
 				ANSI_COLOR_MAGENTA 
 				"Client response: " 
@@ -160,31 +164,33 @@ void *send_data(void *vargs) {
 		command = readline(stdin);	
 		if (command) {
 			strncpy(
-				args->msg.description, 
+				args->msg_send.description, 
 				command, 
 				MIN(BUFFER_SIZE-1, strlen(command)));
-			args->msg.description[BUFFER_SIZE-1] = '\0';
+			args->msg_send.description[BUFFER_SIZE-1] = '\0';
 			free(command);
 		}
 
-		if (args->msg.description != NULL && 
-			strlen(args->msg.description) > 1) {
-			args->msg = process_commands(args->msg);
+		if (args->msg_send.description != NULL && 
+			strlen(args->msg_send.description) > 1) {
+			args->msg_send = process_commands(args->msg_send);
 		} else {
-			args->msg.control_id = INVALID;
+			args->msg_send.control_id = INVALID;
 		}
 		
 		/* Sending data to the server. */
-		if (args->msg.control_id != INVALID && 
-			args->msg.control_id != HELP) {
+		if (args->msg_send.control_id != INVALID && 
+			args->msg_send.control_id != HELP) {
+			printf("Message id: %d\nControl id: %d\nContent: %s\n", args->msg_send.id, args->msg_send.control_id, args->msg_send.description);
+			printf("WHAT???");
 			send(
 				args->client_socket->fd, 
-				&args->msg, 
-				sizeof(args->msg), 
+				&args->msg_send, 
+				sizeof(data_unit), 
 				0);
 		}
 
-		if (args->msg.control_id == EXIT) {
+		if (args->msg_send.control_id == EXIT) {
 			args->process_end = 1;
 			pthread_exit(NULL);
 		}

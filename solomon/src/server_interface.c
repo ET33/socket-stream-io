@@ -7,6 +7,7 @@ file_units_struct *break_file(char *filepath) {
 	FILE *audio_file;
 	unsigned long long int fsize;
 
+	printf("Trying to open: %s\n", filepath);
 	audio_file = fopen(filepath, "rb");
 
 	if (!audio_file) {
@@ -20,23 +21,28 @@ file_units_struct *break_file(char *filepath) {
 
 	unsigned int n_of_data_units = fsize / BUFFER_SIZE;
 	unsigned int data_unit_counter;
-	data_unit **msgs = malloc(sizeof(data_unit *) * 
+	data_unit **msgs = malloc(sizeof(data_unit *) *
 		(n_of_data_units + 1));
 
-	for (data_unit_counter = 0; 
-		data_unit_counter <= n_of_data_units; data_unit_counter++) {
-		static int bytes_read;
+	int bytes_read;
+
+	for (data_unit_counter = 0;
+		data_unit_counter <= n_of_data_units;
+		data_unit_counter++) {
 
 		msgs[data_unit_counter] = malloc(sizeof(data_unit));
 		msgs[data_unit_counter]->control_id = MUSIC;
 		msgs[data_unit_counter]->id = data_unit_counter;
 		// 1 means 'one byte'
-		bytes_read = fread(msgs[data_unit_counter]->description, 
+		bytes_read = fread(msgs[data_unit_counter]->description,
 			1, BUFFER_SIZE, audio_file);
+
+		printf("bytes read: %u\n", bytes_read);
 
 		if (bytes_read < BUFFER_SIZE) {
 		    msgs[data_unit_counter]->description[bytes_read] = '\0';
 		}
+
 	}
 
 	fclose(audio_file);
@@ -50,15 +56,30 @@ file_units_struct *break_file(char *filepath) {
 void *server_send_data_units(void *vargs) {
 	server_args_struct *args = (server_args_struct *) vargs;
 
-	file_units_struct *messages = break_file(args->filepath);
-	for (register unsigned int i = 0; 
-		i < messages->number_of_data_units; i++) {
-		send(
-			args->server_socket->fd, 
-			messages->msgs[i], 
-			sizeof(data_unit), 
-			0);
-	}
+	char *teste = (char *) malloc(100);
+	sprintf(teste, "%s/%s", args->music_dir, "Spektrem - Shine [NCS Release].mp3");
+
+	file_units_struct *messages = break_file(teste);
+
+	send(
+		args->client_socket,
+		messages->msgs[0],
+		sizeof(data_unit),
+		0);
+
+	// for (register unsigned int i = 0; i < messages->number_of_data_units; i++) {
+	// 	args->msg_send = *messages->msgs[i];
+	// 	printf("\nMessage id: %d\nControl id: %d\n",
+	// 		args->msg_send.id,
+	// 		args->msg_send.control_id);
+	// 		//, args->msg_send.description);
+	// 	send(
+	// 		args->client_socket,
+	// 		&args->msg_send,
+	// 		sizeof(data_unit),
+	// 		0);
+	// 	sleep(1);
+	// }
 
 	return NULL;
 }
@@ -75,8 +96,8 @@ data_unit process_commands(data_unit msg) {
 	register unsigned int i;
 	for (i = 0; token != NULL; i++) {
 		str = realloc(str, sizeof(char **) * (i + 1));
-		str[i] =  token;        
-		token = strtok(NULL, delim);        
+		str[i] =  token;
+		token = strtok(NULL, delim);
 	}
 
 	/* Case insensitive compare. */
@@ -95,7 +116,7 @@ data_unit process_commands(data_unit msg) {
 			break;
 
 		case EXIT:
-			printf("Disconnecting...\n");			
+			printf("Disconnecting...\n");
 			break;
 
 		default:
@@ -109,82 +130,83 @@ data_unit process_commands(data_unit msg) {
 void process_data(server_args_struct *args){
 	/* Execute the required operation. */
 	unsigned long int number_of_files;
-	data_unit data = args->msg;
+	char **list_of_files;
+	pthread_t send_data_thread;
 
-	char **list_of_files = get_file_list(
-		args->music_dir, 
-		&number_of_files);
-
-	pthread_t thread_ids[number_of_files];
-
-	switch(data.control_id) {
+	switch(args->msg_recv.control_id) {
 		case PLAY:
-			for (register unsigned int i = 0; i < number_of_files; i++) {
-				pthread_create(thread_ids + i, NULL, server_send_data_units, list_of_files[i]);				
-			}
-			strcpy(data.description, "Playing...");
-			data.control_id = MESSAGE;
-			send(args->new_socket, &data, sizeof(data), 0);
-			data.control_id = MUSIC;
+			strcpy(args->msg_send.description, "Playing...");
+			args->msg_send.control_id = MESSAGE;
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+
+			pthread_create(
+				&send_data_thread,
+				NULL,
+				server_send_data_units,
+				(void *) args);
+
 			break;
 
 		case LIST:
-			strcpy(data.description, "Music List:");
+			list_of_files = get_file_list(
+				args->music_dir,
+				&number_of_files);
+			strcpy(args->msg_send.description, "Music List:");
 			for (register unsigned int i = 0; i < number_of_files; i++) {
-				strcat(data.description, "\n");
-				strcat(data.description, list_of_files[i]);
+				strcat(args->msg_send.description, "\n");
+				strcat(args->msg_send.description, list_of_files[i]);
 			}
-			data.control_id = MESSAGE;
-			send(args->new_socket, &data, sizeof(data), 0);			
+			args->msg_send.control_id = MESSAGE;
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 
 		case STOP:
-			/* Para de enviar a música para o cliente. */	
-			strcpy(data.description, "Server stopped sending music.");
-			data.control_id = MESSAGE;
-			send(args->new_socket, &data, sizeof(data), 0);			
-			break;		
+			/* Para de enviar a música para o cliente. */
+			strcpy(args->msg_send.description, "Server stopped sending music.");
+			args->msg_send.control_id = MESSAGE;
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			break;
 
 		case EXIT:
-			strcpy(data.description, "Thanks for using Theodora Music Stream!\n");
-			data.control_id = MESSAGE_NOANS;
-			send(args->new_socket, &data, sizeof(data), 0);
-			data.control_id = EXIT;
-			send(args->new_socket, &data, sizeof(data), 0);
+			strcpy(args->msg_send.description, "Thanks for using Theodora Music Stream!\n");
+			args->msg_send.control_id = MESSAGE_NOANS;
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			args->msg_send.control_id = EXIT;
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 
 		default:
-			if (strlen(data.description) > 1) {
-				strcpy(data.description, "Invalid operation!");
-				data.control_id = MESSAGE;
+			if (strlen(args->msg_recv.description) > 1) {
+				strcpy(args->msg_send.description, "Invalid operation!");
+				args->msg_send.control_id = MESSAGE;
 			} else {
-				data.control_id = INVALID;
+				args->msg_send.control_id = INVALID;
 			}
-			send(args->new_socket, &data, sizeof(data), 0);			
+			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 	}
 
-	for (register unsigned int i = 0; i < number_of_files; i++)
-		free(list_of_files[i]);
-	free(list_of_files);
 }
 
 void *server_recv_data(void *vargs) {
 	server_args_struct *args = (server_args_struct *) vargs;
 
-	do {    	
+	do {
 		/* Recebendo a msg do cliente. */
-		if (recv(args->new_socket, &args->msg, sizeof(args->msg), 0) == -1)
+		if (recv(args->client_socket, &args->msg_recv, sizeof(data_unit), 0) == -1)
 			ERROR_EXIT(
-				ANSI_COLOR_RED 
-				"Error on receiving data from client" 
+				ANSI_COLOR_RED
+				"Error on receiving data from client"
 				ANSI_COLOR_RESET);
 		else {
-			process_data(args);
+			if (args->msg_recv.control_id != INVALID) {
+				printf("id %d\ncontrol_id: %d\ndescription: %s\n", args->msg_recv.id, args->msg_recv.control_id, args->msg_recv.description);
+				process_data(args);
+			}
 		}
-        
-		if(args->msg.control_id == EXIT) {
-			args->process_end = 1;	
+
+		if(args->msg_send.control_id == EXIT) {
+			args->process_end = 1;
 			pthread_exit(NULL);
 		}
 
@@ -198,40 +220,39 @@ void *server_send_data(void *vargs) {
 	char *command = NULL;
 
 	do {
-                if (args->msg.control_id != EXIT &&
-                        args->msg.control_id != MESSAGE_NOANS) {
+		if (args->msg_send.control_id != EXIT &&
+			args->msg_send.control_id != MESSAGE_NOANS) {
 			printf(
-				ANSI_COLOR_RED 
-				"Server response: " 
+				ANSI_COLOR_RED
+				"Server response: "
 				ANSI_COLOR_RESET);
-                }
-      
+		}
 
-                // Avoids buffer overflow
-                command = readline(stdin);
-                if (command) {
-                        strncpy(
-                                args->msg.description,
-                                command,
-                                MIN(BUFFER_SIZE-1, strlen(command)));
-                        args->msg.description[BUFFER_SIZE-1] = '\0';
-                        free(command);
-                }
+		// Avoids buffer overflow
+		command = readline(stdin);
+		if (command) {
+				strncpy(
+						args->msg_send.description,
+						command,
+						MIN(BUFFER_SIZE-1, strlen(command)));
+				args->msg_send.description[BUFFER_SIZE-1] = '\0';
+				free(command);
+		}
 
-                if (args->msg.description != NULL &&
-                        strlen(args->msg.description) > 1) {
-                        args->msg = process_commands(args->msg);
-                } else {
-                        args->msg.control_id = INVALID;
-                }
+		if (args->msg_send.description != NULL &&
+				strlen(args->msg_send.description) > 1) {
+				args->msg_send = process_commands(args->msg_send);
+		} else {
+				args->msg_send.control_id = INVALID;
+		}
 
-		/* Enviando a msg para o cliente. */
-		if (args->msg.control_id != INVALID && 
-			args->msg.control_id != HELP)
-			send(args->new_socket, &args->msg, sizeof(args->msg), 0);            			
-		
-		if (args->msg.control_id == EXIT) {
-			args->process_end = 1;	
+		/* Enviando a msg_send para o cliente. */
+		if (args->msg_send.control_id != INVALID &&
+			args->msg_send.control_id != HELP)
+			send(args->client_socket, &args->msg_send, sizeof(args->msg_send), 0);
+
+		if (args->msg_send.control_id == EXIT) {
+			args->process_end = 1;
 			pthread_exit(NULL);
 		}
 

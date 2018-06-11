@@ -30,12 +30,14 @@ int main(int argc, char * const argv[]){
 	create_temp_microaudio_dir(TEMP_CLIENT_DIR);
 
 	/* Application section. */
-	args.msg.control_id = MESSAGE;
-	args.msg.id = INVALID;    
+	args.msg_recv.control_id = MESSAGE;
+	args.msg_recv.id = INVALID;
+	args.msg_send.control_id = MESSAGE;
+	args.msg_send.id = INVALID;    
 
-	/* Calling the audio processing function */
+	// /* Calling the audio processing function */
 	args.ss = processSounds(
-		&args.msg, 
+		&args.msg_recv, 
 		&args.process_end, 
 		TEMP_CLIENT_DIR, 
 		1);
