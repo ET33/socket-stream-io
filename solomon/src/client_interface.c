@@ -111,6 +111,7 @@ data_unit process_commands(data_unit msg) {
 			break;
 	}
 
+	/* Temp memory free. */
 	free(str);
 
 	return msg;
