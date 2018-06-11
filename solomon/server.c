@@ -10,6 +10,65 @@ sound_struct *ss;
 int process_end = 0;
 pthread_t recv_thread, send_thread;
 
+typedef struct {
+    data_unit **msgs;
+    int number_of_data_units;
+    int socket;
+} file_units_struct;
+
+file_units_struct *break_file(char *filepath) {
+    file_units_struct *messages = (file_units_struct *) malloc(sizeof(file_units_struct));
+    FILE *audio_file;
+    unsigned long long int fsize;
+
+    audio_file = fopen(filepath, "rb");
+
+    if (!audio_file) {
+        printf("Could not open file\n");
+        return NULL;
+    }
+
+    fseek(audio_file, 0, SEEK_END);
+    fsize = ftell(audio_file);
+    rewind(audio_file);
+
+    unsigned int n_of_data_units = fsize / BUFFER_SIZE;
+    unsigned int data_unit_counter;
+    data_unit **msgs = (data_unit **) malloc(sizeof(data_unit *) * (n_of_data_units + 1));
+
+    for (data_unit_counter = 0; data_unit_counter <= n_of_data_units; data_unit_counter++) {
+        static int bytes_read;
+
+        msgs[data_unit_counter] = (data_unit *) malloc(sizeof(data_unit));
+        msgs[data_unit_counter]->control_id = MUSIC;
+        msgs[data_unit_counter]->id = data_unit_counter;
+        // 1 means 'one byte'
+        bytes_read = fread(msgs[data_unit_counter]->description, 1, BUFFER_SIZE, audio_file);
+
+        if (bytes_read < BUFFER_SIZE)
+            msgs[data_unit_counter]->description[bytes_read] = '\0';
+    }
+
+    fclose(audio_file);
+
+    messages->msgs = msgs;
+    messages->number_of_data_units = data_unit_counter;
+
+    return messages;
+}
+
+void *send_data_units(void *vargs) {
+	char *filepath = (char *)vargs;
+    file_units_struct *messages = break_file(filepath);
+
+    int i;
+    for (i = 0; i < messages->number_of_data_units; i++) {
+        send(server_socket->fd, messages->msgs[i], sizeof(data_unit), 0);
+    }
+
+    return NULL;
+}
+
 data_unit process_commands(data_unit msg) {
 	char **str = (char **) malloc(sizeof(char **));
     const char delim[2] = " ";
@@ -70,9 +129,15 @@ data_unit process_commands(data_unit msg) {
 
 void process_data(data_unit data){
 	/* Execute the required operation. */
+	unsigned long int number_of_files;
+	char **list_of_files = get_file_list("../musics/", &number_of_files);
+	pthread_t thread_ids[number_of_files];
+	int i;
 	switch(data.control_id) {
 		case PLAY:
-			/* Pegar o nome da música que está tocando e enviar para o cliente. */
+			for (i = 0; i < number_of_files; i++) {
+				pthread_create(thread_ids + i, NULL, send_data_units, list_of_files[i]);				
+			}
 			strcpy(data.description, "Playing...");
 			data.control_id = MESSAGE;
 			send(new_socket, &data, sizeof(data), 0);
