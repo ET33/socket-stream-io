@@ -22,7 +22,6 @@ enum{
 	SERVER,
 	CLIENT,
 	NUSERS,
-	GREETINGS,
 	PATH,
 	HELP
 };

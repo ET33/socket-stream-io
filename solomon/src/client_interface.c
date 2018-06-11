@@ -6,17 +6,6 @@
 void process_data(data_unit data) {
 	/* Execute the required operation. */
 	switch(data.control_id) {		
-		case GREETINGS:
-			printf(
-				"Welcome to" 
-				ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET 
-				", a streaming socket audio player.\n");        
-			printf(
-				"Type " 
-				ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET 
-				" to see the command list.\n");
-			break;
-
 		case LIST:
 			printf("%s\n", data.description);
 			break;
@@ -28,11 +17,9 @@ void process_data(data_unit data) {
 		case MESSAGE_NOANS: /* <- that's designedly, don't change unless you know what you're doing. */
 		case MESSAGE:
 			printf("\n");
-			printf(
-				ANSI_COLOR_BLUE 
-				"Server response:" 
-				ANSI_COLOR_RESET " %s\n", 
-				data.description);
+			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
+			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
+			fflush(stdout);
 			break;
 
 		case EXIT: /* The server is shutting down. */
@@ -69,7 +56,7 @@ data_unit process_commands(data_unit msg) {
 		msg.control_id = HELP;		
 	else if (strcasecmp(str[0], "LIST") == 0 && i == 1)
 		msg.control_id = LIST;
-	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1)
+	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1) /* Change here (i <= 2) if accepts the track number. */
 		msg.control_id = PLAY;
 	else if (strcasecmp(str[0], "EXIT") == 0 && i == 1)
 		msg.control_id = EXIT;
@@ -103,9 +90,7 @@ data_unit process_commands(data_unit msg) {
 		 	break;
 
 		case INVALID:
-			if (strlen(str[0]) > 1) {
-				printf("Invalid command.\n");
-			}
+			printf("Invalid command, Type 'help' for command list. \n");
 			break;
 
 		case EXIT:							
@@ -113,9 +98,12 @@ data_unit process_commands(data_unit msg) {
 			break;
 
 		default:
-			printf("Invalid command.\n");
+			printf("Invalid command, Type 'help' for command list. \n");
 			break;
 	}
+
+	/* Temp memory free. */
+	free(str);
 
 	return msg;
 }
@@ -151,6 +139,9 @@ void *send_data(void *vargs) {
 	client_args_struct *args = (client_args_struct *) vargs;
 	char *command = NULL;
 
+	printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
+	printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
+	
 	do {   	           
 		if (args->msg_send.control_id != EXIT && 
 			args->msg_send.control_id != MESSAGE_NOANS) {
