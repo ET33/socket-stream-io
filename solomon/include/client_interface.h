@@ -14,6 +14,6 @@ typedef struct {
 void *send_data(void *vargs);
 void *recv_data(void *vargs);
 data_unit process_commands(data_unit msg);
-void process_data(data_unit data);
+void process_data(data_unit data, sound_struct *ss);
 
 #endif

@@ -33,7 +33,7 @@ enum {
 };
 
 typedef struct {
-    queue *ready_q;
+    queue *ready_q, *aux_q;
     data_unit *cur_data_unit;
     int *process_end;
     char *temp_dir_path;
@@ -52,5 +52,6 @@ void destroy_sound_struct (sound_struct *ss);
 void create_temp_microaudio_dir(char *path);
 void remove_temp_microaudio_dir(char *path);
 char *readline(FILE *fp);
+void *update_ready_queue(void *vargs);
 
 #endif
