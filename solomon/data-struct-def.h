@@ -28,6 +28,8 @@ enum{
     SERVER,
     CLIENT,
     RECONNECT,
+    NUSERS,
+    GREETINGS,
     PATH,
     HELP
 };

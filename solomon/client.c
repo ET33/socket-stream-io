@@ -10,6 +10,10 @@ pthread_t recv_thread, send_thread;
 void process_data(data_unit data) {
 	/* Execute the required operation. */
 	switch(data.control_id) {		
+		case GREETINGS:
+			printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
+    		printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
+
 		case LIST:
 			printf("%s\n", data.description);
 			break;
@@ -20,8 +24,9 @@ void process_data(data_unit data) {
 
 		case MESSAGE:
 			printf("\n");
-			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);			
-			printf(ANSI_COLOR_MAGENTA "Client response:" ANSI_COLOR_RESET "\n");			
+			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
+			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);			
+			fflush(stdout);
 			break;
 
 		case EXIT: /* The server is shutting down. */
@@ -182,10 +187,7 @@ int main(int argc, char * const argv[]){
     msg.id = INVALID;    
 
     /* Calling the audio processing function */
-    ss = processSounds(&msg, &process_end);
-
-    printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
-    printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the list of commands.\n");
+    ss = processSounds(&msg, &process_end);   
 
     /* Making asynchronous communication. */    
     pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
