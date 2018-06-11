@@ -226,8 +226,8 @@ void *send_data(void *args) {
 }
 
 int main(int argc, char * const argv[]) {
-	if (argc != 2)
-		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s port\n" ANSI_COLOR_RESET, argv[0]);
+	if (argc != 3)
+		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s port music_dir\n" ANSI_COLOR_RESET, argv[0]);
 
 	char *host = getIP();
 	unsigned short int port = atoi(argv[1]);	
@@ -239,18 +239,29 @@ int main(int argc, char * const argv[]) {
 	attach_server(server_socket, port);
 
 	/* Listen. */	
-	printf(ANSI_COLOR_GREEN "Server listening" ANSI_COLOR_YELLOW " %s" ANSI_COLOR_GREEN " on port" ANSI_COLOR_YELLOW " %d" ANSI_COLOR_GREEN"...\n" ANSI_COLOR_RESET, host, port);
+	printf(
+		ANSI_COLOR_GREEN "Server listening" ANSI_COLOR_YELLOW 
+		" %s" ANSI_COLOR_GREEN " on port" ANSI_COLOR_YELLOW 
+		" %d" ANSI_COLOR_GREEN"...\n" ANSI_COLOR_RESET, 
+		host, port);
+
 	if (listen(server_socket->fd, NUM_CONNECTIONS))
-		ERROR_EXIT(ANSI_COLOR_RED "Failed to listen for connections" ANSI_COLOR_RESET);
+		ERROR_EXIT(
+			ANSI_COLOR_RED 
+			"Failed to listen for connections" 
+			ANSI_COLOR_RESET);
 	
 	/* Create client socket. */	
 	if ((new_socket = accept(server_socket->fd, NULL, NULL)) == -1)
-		ERROR_EXIT(ANSI_COLOR_RED "Failed to accept client" ANSI_COLOR_RESET);
+		ERROR_EXIT(
+			ANSI_COLOR_RED 
+			"Failed to accept client" 
+			ANSI_COLOR_RESET);
 	else
-		printf(ANSI_COLOR_GREEN "Connection accepted.\n" ANSI_COLOR_RESET);
-
-	// Creates a temporary microaudio file for SERVER
-	create_temp_microaudio_dir(TEMP_SERVER_DIR);
+		printf(
+			ANSI_COLOR_GREEN 
+			"Connection accepted.\n" 
+			ANSI_COLOR_RESET);
 
 	/* Application section. */
 	data_unit msg = {0};
@@ -258,9 +269,13 @@ int main(int argc, char * const argv[]) {
 	msg.id = INVALID;	
 	
 	/* Calling the audio processing function */
-	sound_struct *ss = processSounds(&msg, &process_end, TEMP_SERVER_DIR, 0);
+	sound_struct *ss = processSounds(&msg, &process_end, argv[2], 0);
 
-	printf("Welcome to " ANSI_COLOR_CYAN "Theodora" ANSI_COLOR_RESET " music server socket stream!\nType" ANSI_COLOR_YELLOW " HELP " ANSI_COLOR_RESET "for command list.\n");
+	printf("Welcome to " 
+		ANSI_COLOR_CYAN "Theodora" ANSI_COLOR_RESET 
+		" music server socket stream!\nType" 
+		ANSI_COLOR_YELLOW " HELP " ANSI_COLOR_RESET 
+		"for command list.\n");
 
 	msg.control_id = GREETINGS;
 	send(new_socket, &msg, sizeof(msg), 0);
@@ -270,14 +285,13 @@ int main(int argc, char * const argv[]) {
 		free(host);
 
 	/* Making asynchronous communication. */    
-    pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
-    pthread_create(&send_thread, NULL, send_data, (void *) &msg);
+	pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
+	pthread_create(&send_thread, NULL, send_data, (void *) &msg);
 	pthread_join(recv_thread, NULL);    
 
 	/* Destroy server structure. */
 	destroy_socket(server_socket);
 	destroy_sound_struct(ss);
-	remove_temp_microaudio_dir(TEMP_SERVER_DIR);
 
 	return 0;
 }
