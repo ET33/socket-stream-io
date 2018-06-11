@@ -33,6 +33,11 @@ void process_data(data_unit data) {
 				"Server response:" 
 				ANSI_COLOR_RESET " %s\n", 
 				data.description);
+			printf(
+				ANSI_COLOR_MAGENTA 
+				"Client response: " 
+				ANSI_COLOR_RESET);
+			fflush(stdout);
 			break;
 
 		case EXIT: /* The server is shutting down. */
