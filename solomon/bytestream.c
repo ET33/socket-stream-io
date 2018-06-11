@@ -102,7 +102,7 @@ static char *readline(FILE *fp) {
     Invokes "ls" command on the given directory
     and return a list with the filenames
 */
-static char **get_file_list(char *directory, unsigned long int *size) {
+char **get_file_list(char *directory, unsigned long int *size) {
     char ls_command[] = "/bin/ls ";
     char *command = malloc(sizeof(char) * (1 + strlen(ls_command) + strlen(directory)));
     if (command == NULL) return NULL;

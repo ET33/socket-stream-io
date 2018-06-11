@@ -45,6 +45,7 @@ typedef struct {
 } sound_struct;
 
 // Function declaration
+char **get_file_list(char *directory, unsigned long int *size);
 sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *temp_dir_path, int play_audio);
 void destroy_sound_struct (sound_struct *ss);
 void create_temp_microaudio_dir(char *path);
