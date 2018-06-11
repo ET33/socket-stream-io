@@ -50,5 +50,6 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *te
 void destroy_sound_struct (sound_struct *ss);
 void create_temp_microaudio_dir(char *path);
 void remove_temp_microaudio_dir(char *path);
+char *readline(FILE *fp);
 
 #endif

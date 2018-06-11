@@ -145,12 +145,6 @@ void process_data(data_unit data){
 			break;
 
 		case LIST:
-			/* Dar um ls e enviar para o client a lista de musicas, exemplo
-				[0] Author1 - Musica1
-				[1] Author2 - Musica2 */
-			/* Coloca o resultado em description e enviar de volta para o client. */
-			//strcpy(data.description, "LISTING MUSICS\n");
-			//send(new_socket, &data, sizeof(data), 0);			
 			strcpy(data.description, "Music List");
 			data.control_id = MESSAGE;
 			send(new_socket, &data, sizeof(data), 0);			
@@ -164,7 +158,7 @@ void process_data(data_unit data){
 			break;		
 
 		case EXIT:
-			strcpy(data.description, "Thanks for using Theodora Music Stream!");
+			strcpy(data.description, "Thanks for using Theodora Music Stream!\n");
 			data.control_id = MESSAGE;
 			send(new_socket, &data, sizeof(data), 0);
 			data.control_id = EXIT;
@@ -172,7 +166,9 @@ void process_data(data_unit data){
 			break;
 
 		default:
-			strcpy(data.description, "Invalid operation!");
+			if (strlen(data.description) > 1) {
+				strcpy(data.description, "Invalid operation!");
+			}
 			data.control_id = MESSAGE;
 			send(new_socket, &data, sizeof(data), 0);			
 			break;

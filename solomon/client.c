@@ -1,18 +1,28 @@
 #include "sockets.h"
 #include "bytestream.h"
 
-socket_structure *client_socket;
-sound_struct *ss;
-int process_end = 0;
-pthread_t recv_thread, send_thread;
+typedef struct {
+	socket_structure *client_socket;
+	sound_struct *ss;
+	int process_end;
+	pthread_t recv_thread, send_thread;
+	data_unit msg;
+} client_args_struct;
 
 /* Process data send by the server. */
 void process_data(data_unit data) {
 	/* Execute the required operation. */
 	switch(data.control_id) {		
 		case GREETINGS:
-			printf("Welcome to" ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET ", a streaming socket audio player.\n");        
-    		printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
+			printf(
+				"Welcome to" 
+				ANSI_COLOR_RED " Solomon" ANSI_COLOR_RESET 
+				", a streaming socket audio player.\n");        
+			printf(
+				"Type " 
+				ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET 
+				" to see the command list.\n");
+			break;
 
 		case LIST:
 			printf("%s\n", data.description);
@@ -34,7 +44,8 @@ void process_data(data_unit data) {
 			break;
 
 		default:
-			printf("Invalid command.\n");
+			if (strlen(data.description) > 1)
+				printf("Invalid command.\n");
 			break;
 	}
 
@@ -57,7 +68,7 @@ data_unit process_commands(data_unit msg) {
 		token = strtok(NULL, delim);		
 	}
    
-   /* Case insensitive compare. */
+	/* Case insensitive compare. */
 	if (strcasecmp(str[0], "HELP") == 0 && i == 1) 
 		msg.control_id = HELP;		
 	else if (strcasecmp(str[0], "LIST") == 0 && i == 1)
@@ -90,22 +101,19 @@ data_unit process_commands(data_unit msg) {
 			printf("Listing musics from the server... \n");
 			break;
 
-		// case PLAY:			
-		// 	if (i == 2) {
-		// 		strcpy(msg.description, str[1]);			
-		// 		printf("Play Track %s\n", msg.description);
-		// 	} else {
-		// 		printf("Play Track 0\n");
-		// 	}
-		// 	break;
-
-		// case STOP:
-		// 	/* Parar o player. */
-		// 	printf("Player Stopped. \n");
-		// 	break;
+		case PLAY:			
+		 	if (i == 2) {
+		 		strcpy(msg.description, str[1]);			
+		 		printf("Play Track #%s...\n", msg.description);
+		 	} else {
+		 		printf("Play Track first server music...\n");
+		 	}
+		 	break;
 
 		case INVALID:
-			printf("Invalid command.\n");
+			if (strlen(str[0]) > 1) {
+				printf("Invalid command.\n");
+			}
 			break;
 
 		case EXIT:							
@@ -117,91 +125,140 @@ data_unit process_commands(data_unit msg) {
 			break;
 	}
 
-	/* Temp memory free. */
-	// if(str != NULL) {
-	// 	int j;
-	// 	for(j = 0; j < i; j++) 
-	// 		if(str[j] != NULL)
-	// 			free(str[j]);
-	// 	free(str);
-	// }
-	
 	return msg;
 }
 
-void *recv_data(void *args) {
-	data_unit msg = *((data_unit *) args);
+void *recv_data(void *vargs) {
+	client_args_struct *args = (client_args_struct *) vargs;
 
 	do {    	
 		/* Receiving data from the server. */
-        if (recv(client_socket->fd, &msg, sizeof(msg), 0) == -1) 
-            ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
-        else 
-            process_data(msg);                             
-        
-		if(msg.control_id == EXIT) {
-			process_end = 1;	
-			pthread_exit(&recv_thread);
+		if (recv(args->client_socket->fd, &args->msg, sizeof(args->msg), 0) == -1) {
+		    ERROR_EXIT(
+			ANSI_COLOR_RED 
+			"Error on receiving data from server\n" 
+			ANSI_COLOR_RESET);
+		} else {
+		    process_data(args->msg);
+		}                       
+		
+		if(args->msg.control_id == EXIT) {
+			args->process_end = 1;	
+			pthread_exit(NULL);
 		}
-    } while (!process_end);
+	} while (!args->process_end);
 
-    return NULL;
+	return NULL;
 }
 
-void *send_data(void *args) {
-	data_unit msg = *((data_unit *) args);
+void *send_data(void *vargs) {
+	client_args_struct *args = (client_args_struct *) vargs;
+	char *command = NULL;
 
 	do {   	           
-        printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
-        
-        scanf("%[^\n]%*c", msg.description);     
-        if (msg.description[0] == '\0')        	
-        	getchar();
-        else
-        	msg = process_commands(msg);        
-        
-        /* Sending data to the server. */
-		if (msg.control_id != INVALID && msg.control_id != HELP)
-			send(client_socket->fd, &msg, sizeof(msg), 0);
-		if(msg.control_id == EXIT) {
-			process_end = 1;	
-			pthread_exit(&send_thread);
+		if (args->msg.control_id != EXIT) {
+			printf(
+				ANSI_COLOR_MAGENTA 
+				"Client response: " 
+				ANSI_COLOR_RESET);
 		}
-    } while (!process_end);
 
-    return NULL;
+		// Avoids buffer overflow
+		command = readline(stdin);	
+		if (command) {
+			strncpy(
+				args->msg.description, 
+				command, 
+				MIN(BUFFER_SIZE-1, strlen(command)));
+			args->msg.description[BUFFER_SIZE-1] = '\0';
+			free(command);
+		}
+
+		if (args->msg.description != NULL && 
+			strlen(args->msg.description) > 1) {
+			args->msg = process_commands(args->msg);
+		} else {
+			args->msg.control_id = INVALID;
+		}
+		
+		/* Sending data to the server. */
+		if (args->msg.control_id != INVALID && 
+			args->msg.control_id != HELP) {
+			send(
+				args->client_socket->fd, 
+				&args->msg, 
+				sizeof(args->msg), 
+				0);
+		}
+
+		if (args->msg.control_id == EXIT) {
+			args->process_end = 1;
+			pthread_exit(NULL);
+		}
+
+	} while (!args->process_end);
+
+	return NULL;
 }
 
 int main(int argc, char * const argv[]){
-    if (argc != 3) 
-		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
-    
-    /* Criando o socket client e especificando o endereço do servidor. */
-    client_socket = create_socket(BUFFER_SIZE, atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
+	if (argc != 3) {
+		ERROR2_EXIT(
+			ANSI_COLOR_YELLOW 
+			"Usage: %s IP_ADDRESS PORT\n" 
+			ANSI_COLOR_RESET, 
+			argv[0]);
+	}
 
-    /* Estabelece conexão com o socket server. */
-    connect_server(client_socket, argv[1], argv[2]);
-    
-    // To do: concatenate this default path to a UNIQUE ID
-    // for each client
-    create_temp_microaudio_dir(TEMP_CLIENT_DIR);
+	client_args_struct args = {0};
 
-    /* Application section. */
-    data_unit msg = {0};
-    msg.control_id = MESSAGE;
-    msg.id = INVALID;    
+	/* Criando o socket client e especificando o endereço do servidor. */
+	args.client_socket = create_socket(
+		BUFFER_SIZE, 
+		atoi(argv[2]), 
+		SERVER_TYPE, 
+		PROTOCOL, 
+		argv[1], 
+		CLIENT);
 
-    /* Calling the audio processing function */
-    ss = processSounds(&msg, &process_end, TEMP_CLIENT_DIR, 1);
+	/* Estabelece conexão com o socket server. */
+	connect_server(args.client_socket, argv[1], argv[2]);
 
-    /* Making asynchronous communication. */    
-    pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
-    pthread_create(&send_thread, NULL, send_data, (void *) &msg);
-	pthread_join(recv_thread, NULL);    
+	// To do: concatenate this default path to a UNIQUE ID
+	// for each client
+	create_temp_microaudio_dir(TEMP_CLIENT_DIR);
 
-    /* Encerra a conexão do socket. */
-    destroy_socket(client_socket);    
-    destroy_sound_struct(ss);
+	/* Application section. */
+	args.msg.control_id = MESSAGE;
+	args.msg.id = INVALID;    
 
-    return 0;
+	/* Calling the audio processing function */
+	args.ss = processSounds(
+		&args.msg, 
+		&args.process_end, 
+		TEMP_CLIENT_DIR, 
+		1);
+
+	/* Making asynchronous communication. */    
+	pthread_create(
+		&args.recv_thread, 
+		NULL, 
+		recv_data, 
+		(void *) &args);
+
+	pthread_create(
+		&args.send_thread, 
+		NULL, 
+		send_data, 
+		(void *) &args);
+
+	/* Join threads */
+	pthread_join(args.recv_thread, NULL);    
+	pthread_join(args.send_thread, NULL);    
+
+	/* Encerra a conexão do socket. */
+	destroy_socket(args.client_socket);    
+	destroy_sound_struct(args.ss);
+
+	return 0;
 }

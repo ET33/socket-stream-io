@@ -63,7 +63,7 @@
 /*
     Gets a file data line.
 */
-static char *readline(FILE *fp) {
+char *readline(FILE *fp) {
     // 128 bytes initally for the file line is
     // a heuristic to speed up the process. Is is
     // application dependent.

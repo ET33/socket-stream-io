@@ -20,7 +20,7 @@ define constant. */
 /* Define and typedef section. */
 #define ERROR_EXIT(STR) ({perror(STR); exit(EXIT_FAILURE);})
 #define ERROR2_EXIT(STR, ARGS) ({fprintf(stderr, STR, ARGS); exit(EXIT_FAILURE);})
-#define BUFFER_SIZE 		1024
+#define BUFFER_SIZE 		1024*1024
 #define SERVER_TYPE 		AF_INET
 #define NUM_CONNECTIONS		1
 #define PROTOCOL 		0
@@ -31,6 +31,7 @@ define constant. */
 #define ANSI_COLOR_MAGENTA	"\x1b[35m"
 #define ANSI_COLOR_CYAN		"\x1b[36m"
 #define ANSI_COLOR_RESET	"\x1b[0m"
+#define MIN(A,B) ((A) < (B) ? (A) : (B))
 
 typedef struct {
     int fd;
