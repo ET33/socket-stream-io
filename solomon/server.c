@@ -132,10 +132,10 @@ void process_data(data_unit data){
 	unsigned long int number_of_files;
 	char **list_of_files = get_file_list("../musics/", &number_of_files);
 	pthread_t thread_ids[number_of_files];
-	int i;
+
 	switch(data.control_id) {
 		case PLAY:
-			for (i = 0; i < number_of_files; i++) {
+			for (register unsigned int i = 0; i < number_of_files; i++) {
 				pthread_create(thread_ids + i, NULL, send_data_units, list_of_files[i]);				
 			}
 			strcpy(data.description, "Playing...");
@@ -145,7 +145,11 @@ void process_data(data_unit data){
 			break;
 
 		case LIST:
-			strcpy(data.description, "Music List");
+			strcpy(data.description, "Music List:");
+			for (register unsigned int i = 0; i < number_of_files; i++) {
+				strcat(data.description, "\n");
+				strcat(data.description, list_of_files[i]);
+			}
 			data.control_id = MESSAGE;
 			send(new_socket, &data, sizeof(data), 0);			
 			break;
@@ -173,6 +177,10 @@ void process_data(data_unit data){
 			send(new_socket, &data, sizeof(data), 0);			
 			break;
 	}
+
+	for (register unsigned int i = 0; i < number_of_files; i++)
+		free(list_of_files[i]);
+	free(list_of_files);
 }
 
 void *recv_data(void *args) {
