@@ -3,24 +3,13 @@
 #include "client_interface.h"
 
 int main(int argc, char * const argv[]){
-	if (argc != 3) {
-		ERROR2_EXIT(
-			ANSI_COLOR_YELLOW 
-			"Usage: %s IP_ADDRESS PORT\n" 
-			ANSI_COLOR_RESET, 
-			argv[0]);
-	}
-
+	if (argc != 3)
+		ERROR2_EXIT(ANSI_COLOR_YELLOW "Usage: %s IP_ADDRESS PORT\n" ANSI_COLOR_RESET, argv[0]);
+	
 	client_args_struct args = {0};
 
 	/* Criando o socket client e especificando o endereço do servidor. */
-	args.client_socket = create_socket(
-		BUFFER_SIZE, 
-		atoi(argv[2]), 
-		SERVER_TYPE, 
-		PROTOCOL, 
-		argv[1], 
-		CLIENT);
+	args.client_socket = create_socket(BUFFER_SIZE, atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
 
 	/* Estabelece conexão com o socket server. */
 	connect_server(args.client_socket, argv[1], argv[2]);
@@ -34,24 +23,11 @@ int main(int argc, char * const argv[]){
 	args.msg.id = INVALID;    
 
 	/* Calling the audio processing function */
-	args.ss = processSounds(
-		&args.msg, 
-		&args.process_end, 
-		TEMP_CLIENT_DIR, 
-		1);
+	args.ss = processSounds(&args.msg, &args.process_end, TEMP_CLIENT_DIR, 1);
 
 	/* Making asynchronous communication. */    
-	pthread_create(
-		&args.recv_thread, 
-		NULL, 
-		recv_data, 
-		(void *) &args);
-
-	pthread_create(
-		&args.send_thread, 
-		NULL, 
-		send_data, 
-		(void *) &args);
+	pthread_create(&args.recv_thread, NULL, recv_data, (void *) &args);
+	pthread_create(&args.send_thread, NULL, send_data, (void *) &args);
 
 	/* Join threads */
 	pthread_join(args.recv_thread, NULL);    

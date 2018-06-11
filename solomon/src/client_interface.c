@@ -17,15 +17,8 @@ void process_data(data_unit data) {
 		case MESSAGE_NOANS: /* <- that's designedly, don't change unless you know what you're doing. */
 		case MESSAGE:
 			printf("\n");
-			printf(
-				ANSI_COLOR_BLUE 
-				"Server response:" 
-				ANSI_COLOR_RESET " %s\n", 
-				data.description);
-			printf(
-				ANSI_COLOR_MAGENTA 
-				"Client response: " 
-				ANSI_COLOR_RESET);
+			printf(ANSI_COLOR_BLUE "Server response:" ANSI_COLOR_RESET " %s\n", data.description);
+			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
 			fflush(stdout);
 			break;
 
@@ -63,7 +56,7 @@ data_unit process_commands(data_unit msg) {
 		msg.control_id = HELP;		
 	else if (strcasecmp(str[0], "LIST") == 0 && i == 1)
 		msg.control_id = LIST;
-	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1)
+	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1) /* Change here (i <= 2) if accepts the track number. */
 		msg.control_id = PLAY;
 	else if (strcasecmp(str[0], "EXIT") == 0 && i == 1)
 		msg.control_id = EXIT;
@@ -97,9 +90,7 @@ data_unit process_commands(data_unit msg) {
 		 	break;
 
 		case INVALID:
-			if (strlen(str[0]) > 1) {
-				printf("Invalid command.\n");
-			}
+			printf("Invalid command, Type 'help' for command list. \n");
 			break;
 
 		case EXIT:							
@@ -107,7 +98,7 @@ data_unit process_commands(data_unit msg) {
 			break;
 
 		default:
-			printf("Invalid command.\n");
+			printf("Invalid command, Type 'help' for command list. \n");
 			break;
 	}
 
@@ -122,14 +113,10 @@ void *recv_data(void *vargs) {
 
 	do {    	
 		/* Receiving data from the server. */
-		if (recv(args->client_socket->fd, &args->msg, sizeof(args->msg), 0) == -1) {
-		    ERROR_EXIT(
-			ANSI_COLOR_RED 
-			"Error on receiving data from server\n" 
-			ANSI_COLOR_RESET);
-		} else {
-		    process_data(args->msg);
-		}                       
+		if (recv(args->client_socket->fd, &args->msg, sizeof(args->msg), 0) == -1)
+		    ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
+		else
+		    process_data(args->msg);		                       
 		
 		if(args->msg.control_id == EXIT) {
 			args->process_end = 1;	
@@ -148,42 +135,26 @@ void *send_data(void *vargs) {
 	printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
 	
 	do {   	           
-		if (args->msg.control_id != EXIT && 
-			args->msg.control_id != MESSAGE_NOANS) {
-			printf(
-				ANSI_COLOR_MAGENTA 
-				"Client response: " 
-				ANSI_COLOR_RESET);
-		}
+		if (args->msg.control_id != EXIT && args->msg.control_id != MESSAGE_NOANS)
+			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);		
 
 		// Avoids buffer overflow
 		command = readline(stdin);	
 		if (command) {
-			strncpy(
-				args->msg.description, 
-				command, 
-				MIN(BUFFER_SIZE-1, strlen(command)));
-			args->msg.description[BUFFER_SIZE-1] = '\0';
+			strncpy(args->msg.description, command, MIN(BUFFER_SIZE-1, strlen(command)));
+			args->msg.description[MIN(BUFFER_SIZE-1, strlen(command))] = '\0';
 			free(command);
 		}
 
-		if (args->msg.description != NULL && 
-			strlen(args->msg.description) > 1) {
+		if (args->msg.description[0] != '\0' && strlen(args->msg.description) > 0)
 			args->msg = process_commands(args->msg);
-		} else {
+		else
 			args->msg.control_id = INVALID;
-		}
-		
+					
 		/* Sending data to the server. */
-		if (args->msg.control_id != INVALID && 
-			args->msg.control_id != HELP) {
-			send(
-				args->client_socket->fd, 
-				&args->msg, 
-				sizeof(args->msg), 
-				0);
-		}
-
+		if (args->msg.control_id != INVALID && args->msg.control_id != HELP)
+			send(args->client_socket->fd, &args->msg, sizeof(args->msg), 0);
+		
 		if (args->msg.control_id == EXIT) {
 			args->process_end = 1;
 			pthread_exit(NULL);
