@@ -120,17 +120,16 @@ void *recv_data(void *vargs) {
 				"Error on receiving data from server\n" 
 				ANSI_COLOR_RESET);
 		} else {
-			if (aux.control_id >= 0 && aux.control_id < 7) {
+			if (args->msg_recv.control_id >= 0 && args->msg_recv.control_id < 7) {
 				printf(ANSI_COLOR_GREEN);
-				printf("aux size: %ld\n", sizeof(aux));
 			} else {
 				printf(ANSI_COLOR_YELLOW);
 			}
 			printf(
 				"\nMessage id: %d\nControl id: %d\n"
 				ANSI_COLOR_RESET,
-				aux.id,
-				aux.control_id);
+				args->msg_recv.id,
+				args->msg_recv.control_id);
 				//, args->msg_recv.description);
 		    process_data(args->msg_recv, args->ss);
 		}
