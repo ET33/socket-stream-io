@@ -62,7 +62,7 @@ data_unit process_commands(data_unit msg) {
 		msg.control_id = HELP;		
 	else if (strcasecmp(str[0], "LIST") == 0 && i == 1)
 		msg.control_id = LIST;
-	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 2)
+	else if (strcasecmp(str[0], "PLAY") == 0 && i <= 1)
 		msg.control_id = PLAY;
 	else if (strcasecmp(str[0], "STOP") == 0 && i == 1)
 		msg.control_id = STOP;
@@ -81,7 +81,7 @@ data_unit process_commands(data_unit msg) {
 			printf("HELP - List all the commands supported by this program.\n");
 			printf("LIST - List all the music tracks avaiable on the server. \n");
 			printf("PLAY - Play the first music track available on the server. \n");
-			printf("PlAY NR_TRACK - Play a specific music by a valid track number. \n");
+			//printf("PlAY NR_TRACK - Play a specific music by a valid track number. \n");
 			printf("STOP - Stop the player from playing the music and the server from sending it.\n");
 			printf("EXIT - Disconnect from the server and exit the program. \n");			
 			break;
@@ -90,14 +90,14 @@ data_unit process_commands(data_unit msg) {
 			printf("Listing musics from the server... \n");
 			break;
 
-		case PLAY:			
-			if (i == 2) {
-				strcpy(msg.description, str[1]);			
-				printf("Play Track %s\n", msg.description);
-			} else {
-				printf("Play Track 0\n");
-			}
-			break;
+		// case PLAY:			
+		// 	if (i == 2) {
+		// 		strcpy(msg.description, str[1]);			
+		// 		printf("Play Track %s\n", msg.description);
+		// 	} else {
+		// 		printf("Play Track 0\n");
+		// 	}
+		// 	break;
 
 		case STOP:
 			/* Parar o player. */
