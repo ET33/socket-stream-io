@@ -315,7 +315,7 @@ void *update_ready_queue(void *vargs) {
         }
     //}
 
-    q_destroy(aux_q);
+    // q_destroy(aux_q);
     
     return NULL;
 }
@@ -358,7 +358,7 @@ void create_temp_microaudio_dir(char *path) {
     created to keep microaudios.
 */
 void remove_temp_microaudio_dir(char *path) {
-    char inst[] = "rm -r ";
+    char inst[] = "rm -rf ";
     char *command = malloc(sizeof(char) * (strlen(path) + strlen(inst) + 1));
     strcpy(command, inst);
     strcat(command, path);

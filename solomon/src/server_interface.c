@@ -64,6 +64,8 @@ void *server_send_data_units(void *vargs) {
 			messages->msgs[i],
 			sizeof(data_unit),
 			0);
+			
+		sleep(1);
 	}
 
 	return NULL;
@@ -208,7 +210,6 @@ void *server_recv_data(void *vargs) {
 				ANSI_COLOR_RESET);
 		else {
 			if (args->msg_recv.control_id != INVALID) {
-				printf("id %d\ncontrol_id: %d\ndescription: %s\n", args->msg_recv.id, args->msg_recv.control_id, args->msg_recv.description);
 				process_data(args);
 			}
 		}
