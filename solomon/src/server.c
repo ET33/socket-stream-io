@@ -18,7 +18,7 @@ int main(int argc, char * const argv[]) {
 	args.music_dir = argv[2];
 
 	/* Initialize server structure. */
-	args.server_socket = create_socket(BUFFER_SIZE, port, SERVER_TYPE, PROTOCOL, host, SERVER);
+	args.server_socket = create_socket(port, SERVER_TYPE, PROTOCOL, host, SERVER);
 
 	/* Bind server to the given port. */
 	attach_server(args.server_socket, port);

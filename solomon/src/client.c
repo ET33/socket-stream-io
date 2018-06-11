@@ -9,7 +9,7 @@ int main(int argc, char * const argv[]){
 	client_args_struct args = {0};
 
 	/* Criando o socket client e especificando o endereço do servidor. */
-	args.client_socket = create_socket(BUFFER_SIZE, atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
+	args.client_socket = create_socket(atoi(argv[2]), SERVER_TYPE, PROTOCOL, argv[1], CLIENT);
 
 	/* Estabelece conexão com o socket server. */
 	connect_server(args.client_socket, argv[1], argv[2]);

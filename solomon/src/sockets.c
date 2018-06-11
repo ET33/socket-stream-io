@@ -1,14 +1,10 @@
 #include "sockets.h"
 
-socket_structure *create_socket(unsigned int buffer_size, unsigned short int port, int server_type, int protocol, char *ip_address, int op) {
+socket_structure *create_socket(unsigned short int port, int server_type, int protocol, char *ip_address, int op) {
     socket_structure *socket_struct = malloc(sizeof(socket_structure));
     if (socket_struct == NULL)
         ERROR_EXIT(ANSI_COLOR_RED "Failed to init socket structure" ANSI_COLOR_RESET);
 
-    socket_struct->buffer = malloc(sizeof(char) * buffer_size);
-    if (socket_struct->buffer == NULL)
-        ERROR_EXIT(ANSI_COLOR_RED "Failed to init buffer" ANSI_COLOR_RESET);
-    
     /* Create socket file descriptor. */    
     if ((socket_struct->fd = socket(server_type, SOCK_STREAM, protocol)) == -1)
         ERROR_EXIT(ANSI_COLOR_RED "Failed to create socket" ANSI_COLOR_RESET);
@@ -57,9 +53,6 @@ void destroy_socket(socket_structure *socket_struct) {
 		return;
 
 	close(socket_struct->fd);
-
-	if (socket_struct->buffer)
-		free(socket_struct->buffer);		    
 
 	free(socket_struct);	
 }
