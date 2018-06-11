@@ -6,6 +6,7 @@
 enum{
     INVALID,
     MESSAGE,
+    MUSIC,
     AUDIO,
     VIDEO,
     IMAGE,
@@ -27,7 +28,10 @@ enum{
     SERVER,
     CLIENT,
     RECONNECT,
-    PATH
+    NUSERS,
+    GREETINGS,
+    PATH,
+    HELP
 };
 
 /* Basic data transfer between client and server. */
