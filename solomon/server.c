@@ -70,24 +70,47 @@ data_unit process_commands(data_unit msg) {
 
 void process_data(data_unit data){
 	/* Execute the required operation. */
-	if(data.control_id == HELP){
-		strcpy(data.description, "Command List:\nstart\tStart Music\nstop\tStop Music\nlist\tList muscis in server\nexit\tExit Program\n");
-		data.control_id = HELP;
-	}else if(data.control_id == PLAY){
-		strcpy(data.description, "Playing...\n");
-		data.control_id = START;
-	}else if(data.control_id == STOP){
-		strcpy(data.description, "Music Stopped\n");
-		data.control_id = STOP;
-	}else if(data.control_id == LIST){
-		strcpy(data.description, "LISTING MUSICS\n");
-		data.control_id = LIST;
-	}else if(data.control_id == EXIT){
-		strcpy(data.description, "Thanks for using Theodora Music Stream!\n");
-		data.control_id = EXIT;
-	}else{
-		strcpy(data.description, "Invalid command, Type 'help' for command list. \n");
-		data.control_id = INVALID;
+	switch(data.control_id) {
+		case PLAY:
+			/* Pegar o nome da música que está tocando e enviar para o cliente. */
+			strcpy(data.description, "Playing...");
+			data.control_id = MESSAGE;
+			send(new_socket, &data, sizeof(data), 0);
+			data.control_id = MUSIC;
+			break;
+
+		case LIST:
+			/* Dar um ls e enviar para o client a lista de musicas, exemplo
+				[0] Author1 - Musica1
+				[1] Author2 - Musica2 */
+			/* Coloca o resultado em description e enviar de volta para o client. */
+			//strcpy(data.description, "LISTING MUSICS\n");
+			//send(new_socket, &data, sizeof(data), 0);			
+			strcpy(data.description, "Music List");
+			data.control_id = MESSAGE;
+			send(new_socket, &data, sizeof(data), 0);			
+			break;
+
+		case STOP:
+			/* Para de enviar a música para o cliente. */	
+			strcpy(data.description, "Server stopped sending music.");
+			data.control_id = MESSAGE;
+			send(new_socket, &data, sizeof(data), 0);			
+			break;		
+
+		case EXIT:
+			strcpy(data.description, "Thanks for using Theodora Music Stream!");
+			data.control_id = MESSAGE;
+			send(new_socket, &data, sizeof(data), 0);
+			data.control_id = EXIT;
+			send(new_socket, &data, sizeof(data), 0);
+			break;
+
+		default:
+			strcpy(data.description, "Invalid operation!");
+			data.control_id = MESSAGE;
+			send(new_socket, &data, sizeof(data), 0);			
+			break;
 	}
 }
 
@@ -99,7 +122,7 @@ void *recv_data(void *args) {
 		if (recv(new_socket, &msg, sizeof(msg), 0) == -1)
 			ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from client" ANSI_COLOR_RESET);
 		else {
-			printf(ANSI_COLOR_CYAN "Client response: " ANSI_COLOR_RESET "%s \n", msg.description);
+			//printf(ANSI_COLOR_CYAN "Client response: " ANSI_COLOR_RESET "%s \n", msg.description);
 			process_data(msg);
 		}
         
@@ -179,9 +202,9 @@ int main(int argc, char * const argv[]) {
 		free(host);
 
 	/* Making asynchronous communication. */    
-    //pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
+    pthread_create(&recv_thread, NULL, recv_data, (void *) &msg);
     pthread_create(&send_thread, NULL, send_data, (void *) &msg);
-	//pthread_join(recv_thread, NULL);    
+	pthread_join(recv_thread, NULL);    
 
 	/* Destroy server structure. */
 	destroy_socket(server_socket);
