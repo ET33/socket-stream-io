@@ -153,17 +153,20 @@ void *send_data(void *vargs) {
 
 		// Avoids buffer overflow
 		command = readline(stdin);	
-		if (command) {
-			strncpy(
-				args->msg_send.description, 
-				command, 
-				MIN(BUFFER_SIZE-1, strlen(command)));
-			args->msg_send.description[BUFFER_SIZE-1] = '\0';
-			free(command);
-		}
 
-		if (args->msg_send.description != NULL && 
-			strlen(args->msg_send.description) > 1) {
+                *args->msg_send.description = '\0';
+                if (command) {
+                                unsigned long int command_size = MIN(BUFFER_SIZE-1, strlen(command));
+                                strncpy(
+                                                args->msg_send.description,
+                                                command,
+                                                command_size);
+                                args->msg_send.description[command_size] = '\0';
+                                free(command);
+                }
+
+                if (*args->msg_send.description != '\0' &&
+                                strlen(args->msg_send.description) > 0) {
 			args->msg_send = process_commands(args->msg_send);
 		} else {
 			args->msg_send.control_id = INVALID;
@@ -172,8 +175,6 @@ void *send_data(void *vargs) {
 		/* Sending data to the server. */
 		if (args->msg_send.control_id != INVALID && 
 			args->msg_send.control_id != HELP) {
-			printf("Message id: %d\nControl id: %d\nContent: %s\n", args->msg_send.id, args->msg_send.control_id, args->msg_send.description);
-			printf("WHAT???");
 			send(
 				args->client_socket->fd, 
 				&args->msg_send, 

@@ -157,20 +157,19 @@ static void *play_microaudios(void *vargs) {
         // For each microaudio file...
         for (register unsigned long int i = 0; i < microaudio_counter; i++) {
             // The full command is :
-            // "aplay <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
+            // "ffplay -loglevel panic -nodisp <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
             command = malloc(sizeof(char) * (PLAY_MICROAUDIO_CMD_SIZE +
                                              2 * (temp_dir_path_len + strlen(temp_dir_ls[i])) + 1));
 
-            // Concatenate "aplay " with complete microaudio filepath
+            // Concatenate "ffplay + rm " with complete microaudio filepath
             // in command variable
             sprintf(command, 
-                    "aplay %s%s && rm %s%s", 
+                    "ffplay -loglevel panic -nodisp %s%s && rm %s%s", 
                     temp_dir_path, temp_dir_ls[i], 
                     temp_dir_path, temp_dir_ls[i]);
 
             // Play sound on the given filepath
             system(command);
-            printf("removed with: %s\n", command);
 
             // Free some memory allocated
             free(command);

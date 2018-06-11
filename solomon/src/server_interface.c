@@ -31,14 +31,15 @@ file_units_struct *break_file(char *filepath) {
 		data_unit_counter++) {
 
 		msgs[data_unit_counter] = malloc(sizeof(data_unit));
-		msgs[data_unit_counter]->control_id = MUSIC;
-		msgs[data_unit_counter]->id = data_unit_counter;
 		// 1 means 'one byte'
 		bytes_read = fread(msgs[data_unit_counter]->description,
 			1, BUFFER_SIZE, audio_file);
 
 		if (bytes_read < BUFFER_SIZE)
 			msgs[data_unit_counter]->description[bytes_read] = '\0';		
+
+		msgs[data_unit_counter]->control_id = MUSIC;
+		msgs[data_unit_counter]->id = data_unit_counter;
 	}
 
 	fclose(audio_file);
@@ -57,25 +58,13 @@ void *server_send_data_units(void *vargs) {
 
 	file_units_struct *messages = break_file(teste);
 
-	send(
-		args->client_socket,
-		messages->msgs[0],
-		sizeof(data_unit),
-		0);
-
-	// for (register unsigned int i = 0; i < messages->number_of_data_units; i++) {
-	// 	args->msg_send = *messages->msgs[i];
-	// 	printf("\nMessage id: %d\nControl id: %d\n",
-	// 		args->msg_send.id,
-	// 		args->msg_send.control_id);
-	// 		//, args->msg_send.description);
-	// 	send(
-	// 		args->client_socket,
-	// 		&args->msg_send,
-	// 		sizeof(data_unit),
-	// 		0);
-	// 	sleep(1);
-	// }
+	for (register unsigned int i = 0; i < messages->number_of_data_units; i++) {
+		send(
+			args->client_socket,
+			messages->msgs[i],
+			sizeof(data_unit),
+			0);
+	}
 
 	return NULL;
 }
@@ -249,18 +238,20 @@ void *server_send_data(void *vargs) {
 
 		// Avoids buffer overflow
 		command = readline(stdin);
+		*args->msg_send.description = '\0';
 		if (command) {
-				strncpy(
-						args->msg_send.description,
-						command,
-						MIN(BUFFER_SIZE-1, strlen(command)));
-				args->msg_send.description[BUFFER_SIZE-1] = '\0';
-				free(command);
+			unsigned long int command_size = MIN(BUFFER_SIZE-1, strlen(command));
+			strncpy(
+					args->msg_send.description,
+					command,
+					command_size);
+			args->msg_send.description[command_size] = '\0';
+			free(command);
 		}
 
-		if (args->msg_send.description != NULL &&
-				strlen(args->msg_send.description) > 1) {
-				args->msg_send = process_commands(args->msg, args->music_dir);
+		if (*args->msg_send.description != '\0' &&
+				strlen(args->msg_send.description) > 0) {
+				args->msg_send = process_commands(args->msg_send, args->music_dir);
 		} else {
 				args->msg_send.control_id = INVALID;
 		}

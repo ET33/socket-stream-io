@@ -21,9 +21,9 @@
 #define MAX_COUNTER_LEN 20
 
 // The full command is 
-// "aplay <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
-// This define counts "aplay "(6) + " && rm "(7) = 13
-#define PLAY_MICROAUDIO_CMD_SIZE 13
+// "ffplay -loglevel panic -nodisp <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
+// This define counts "ffplay -loglevel panic -nodisp "(31) + " && rm "(7) = 38
+#define PLAY_MICROAUDIO_CMD_SIZE 38
 
 enum {
     PROCESS_READY_QUEUE,
