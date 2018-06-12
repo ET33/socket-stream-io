@@ -11,6 +11,11 @@ void process_data(data_unit data, sound_struct *ss) {
 			break;
 
 		case MUSIC:
+			printf(
+				ANSI_COLOR_GREEN 
+				"Package received - id: %d\n" 
+				ANSI_COLOR_RESET, 
+				data.id);
 			update_ready_queue((void *) &(ss->args));
 			/* Play the track. */			
 			break;
@@ -25,11 +30,6 @@ void process_data(data_unit data, sound_struct *ss) {
 
 		case EXIT: /* The server is shutting down. */
 			printf("Disconnecting...\n");				    					
-			break;
-
-		default:
-			if (strlen(data.description) > 0)
-				printf("Invalid command.\n");
 			break;
 	}
 
@@ -120,17 +120,6 @@ void *recv_data(void *vargs) {
 				"Error on receiving data from server\n" 
 				ANSI_COLOR_RESET);
 		} else {
-			if (args->msg_recv.control_id >= 0 && args->msg_recv.control_id < 7) {
-				printf(ANSI_COLOR_GREEN);
-			} else {
-				printf(ANSI_COLOR_YELLOW);
-			}
-			printf(
-				"\nMessage id: %d\nControl id: %d\n"
-				ANSI_COLOR_RESET,
-				args->msg_recv.id,
-				args->msg_recv.control_id);
-				//, args->msg_recv.description);
 		    process_data(args->msg_recv, args->ss);
 		}
 		

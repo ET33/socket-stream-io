@@ -6,12 +6,15 @@
 #include "queue.h"
 
 // Typedef and define section
-#define TEMP_SERVER_DIR "./.SERVER_DIR/"
+#define TEMP_SERVER_DIR "./SERVER_DIR/"
 
 // Note that just this path isn't suffice for
 // the client, as it's possible to exists n clients
 // for a single server.
-#define TEMP_CLIENT_DIR "./.CLIENT_DIR/"
+#define TEMP_CLIENT_DIR "./CLIENT_DIR/"
+
+// Name of the final file to append all microaudios
+#define FINAL_FILE_NAME "final.mp3"
 
 // Max digits of a UNSIGNED LONG LONG INT
 // Calculated as 

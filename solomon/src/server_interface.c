@@ -20,6 +20,13 @@ file_units_struct *break_file(char *filepath) {
 	rewind(audio_file);
 
 	unsigned int n_of_data_units = fsize / BUFFER_SIZE;
+
+	printf(
+		ANSI_COLOR_BLUE 
+		"Total of %u packages to be send to client..." 
+		ANSI_COLOR_RESET, 
+		n_of_data_units);
+
 	unsigned int data_unit_counter;
 	data_unit **msgs = malloc(sizeof(data_unit *) *
 		(n_of_data_units + 1));
@@ -65,7 +72,7 @@ void *server_send_data_units(void *vargs) {
 			sizeof(data_unit),
 			0);
 			
-		sleep(1);
+		sleep(2);
 	}
 
 	return NULL;
