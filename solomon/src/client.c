@@ -16,8 +16,8 @@ int main(int argc, char * const argv[]){
 
 	// To do: concatenate this default path to a UNIQUE ID
 	// for each client
-	remove_temp_microaudio_dir(TEMP_CLIENT_DIR);
-	create_temp_microaudio_dir(TEMP_CLIENT_DIR);
+	//remove_temp_microaudio_dir(TEMP_CLIENT_DIR);
+	//create_temp_microaudio_dir(TEMP_CLIENT_DIR);
 
 	/* Application section. */
 	args.msg_recv.control_id = MESSAGE;
@@ -26,11 +26,7 @@ int main(int argc, char * const argv[]){
 	args.msg_send.id = INVALID;    
 
 	// /* Calling the audio processing function */
-	args.ss = processSounds(
-		&args.msg_recv, 
-		&args.process_end, 
-		TEMP_CLIENT_DIR, 
-		1);
+	//args.ss = processSounds(&args.msg_recv, &args.process_end, TEMP_CLIENT_DIR, 1);
 
 	/* Making asynchronous communication. */    
 	pthread_create(&args.recv_thread, NULL, recv_data, (void *) &args);

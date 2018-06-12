@@ -22,37 +22,41 @@ file_units_struct *break_file(void *vargs, char *filepath) {
 
 	unsigned int n_of_data_units = fsize / BUFFER_SIZE;
 
-	printf(
-		ANSI_COLOR_BLUE 
-		"Total of %u packages to be send to client..." 
-		ANSI_COLOR_RESET, 
-		n_of_data_units);
+	printf(ANSI_COLOR_BLUE "Total of %u packages to be send to client..." ANSI_COLOR_RESET, n_of_data_units);
 
 	unsigned int data_unit_counter;
 	data_unit **msgs = malloc(sizeof(data_unit *) *
 		(n_of_data_units + 1));
 
 	int bytes_read;
-
-	for (data_unit_counter = 0;
-		data_unit_counter <= n_of_data_units;
-		data_unit_counter++) {
+	
+	for (data_unit_counter = 0; data_unit_counter <= n_of_data_units; data_unit_counter++) {
 
 		msgs[data_unit_counter] = malloc(sizeof(data_unit));
+
+		// if(data_unit_counter == 0) {
+		// 	msgs[0]->control_id = START;
+		// 	send(args->client_socket, msgs[0], sizeof(data_unit), 0);
+		// }
+
 		// 1 means 'one byte'
 		bytes_read = fread(msgs[data_unit_counter]->description, 1, BUFFER_SIZE, audio_file);
 		send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);
 
 		if (bytes_read < BUFFER_SIZE)
 			msgs[data_unit_counter]->description[bytes_read] = '\0';		
-
 		msgs[data_unit_counter]->control_id = MUSIC;
 		msgs[data_unit_counter]->id = data_unit_counter;
+
 		
 		send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);
 	}
 
+
 	fclose(audio_file);
+
+	msgs[0]->control_id = PLAY;
+	send(args->client_socket, msgs[0], sizeof(data_unit), 0);
 
 	messages->msgs = msgs;
 	messages->number_of_data_units = data_unit_counter;

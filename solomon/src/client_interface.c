@@ -10,15 +10,28 @@ void process_data(data_unit data, sound_struct *ss) {
 			printf("%s\n", data.description);
 			break;
 
+		case START:
+			system("rm -rf ./a.mp3");
+			break;
+
 		case MUSIC:
 			printf(ANSI_COLOR_GREEN "Package received - id: %d\n" ANSI_COLOR_RESET, data.id);
-			
+			//TEMP_CLIENT_DIR
 			FILE *audio_file = fopen("./a.mp3", "a");
 			fwrite(data.description, sizeof(char), sizeof(data_unit), audio_file);								
 			fclose(audio_file);
 
+			// if(data.id == 0) {
+				// system("ffplay -loglevel panic -nodisp ./a.mp3");
+			// }
+
 			//update_ready_queue((void *) &(ss->args));
 			/* Play the track. */			
+			break;
+
+		case PLAY:
+			system("ffplay -loglevel panic -nodisp ./a.mp3");
+			//system("cvlc ./a.mp3");
 			break;
 
 		case MESSAGE_NOANS: /* <- that's designedly, don't change unless you know what you're doing. */
