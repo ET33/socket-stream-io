@@ -2,7 +2,8 @@
 #include "bytestream.h"
 #include "server_interface.h"
 
-file_units_struct *break_file(char *filepath) {
+file_units_struct *break_file(void *vargs, char *filepath) {
+	server_args_struct *args = (server_args_struct *) vargs;
 	file_units_struct *messages = malloc(sizeof(file_units_struct));
 	FILE *audio_file;
 	unsigned long long int fsize;
@@ -39,21 +40,23 @@ file_units_struct *break_file(char *filepath) {
 
 		msgs[data_unit_counter] = malloc(sizeof(data_unit));
 		// 1 means 'one byte'
-		bytes_read = fread(msgs[data_unit_counter]->description,
-			1, BUFFER_SIZE, audio_file);
+		bytes_read = fread(msgs[data_unit_counter]->description, 1, BUFFER_SIZE, audio_file);
+		send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);
 
 		if (bytes_read < BUFFER_SIZE)
 			msgs[data_unit_counter]->description[bytes_read] = '\0';		
 
 		msgs[data_unit_counter]->control_id = MUSIC;
 		msgs[data_unit_counter]->id = data_unit_counter;
+		
+		send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);
 	}
 
 	fclose(audio_file);
 
 	messages->msgs = msgs;
 	messages->number_of_data_units = data_unit_counter;
-
+	
 	return messages;
 }
 
@@ -62,18 +65,12 @@ void *server_send_data_units(void *vargs) {
 
 	char *teste = (char *) malloc(100);
 	sprintf(teste, "%s/%s", args->music_dir, "Spektrem - Shine [NCS Release].mp3");
+	printf("%s\n", teste);
 
-	file_units_struct *messages = break_file(teste);
+	break_file(args, teste);
 
-	for (register unsigned int i = 0; i < messages->number_of_data_units; i++) {
-		send(
-			args->client_socket,
-			messages->msgs[i],
-			sizeof(data_unit),
-			0);
-			
-		sleep(2);
-	}
+	//for (register unsigned int i = 0; i < messages->number_of_data_units; i++)
+	//	send(args->client_socket, messages->msgs[i], sizeof(data_unit), 0);						
 
 	return NULL;
 }

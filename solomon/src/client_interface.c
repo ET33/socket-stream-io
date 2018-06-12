@@ -11,12 +11,13 @@ void process_data(data_unit data, sound_struct *ss) {
 			break;
 
 		case MUSIC:
-			printf(
-				ANSI_COLOR_GREEN 
-				"Package received - id: %d\n" 
-				ANSI_COLOR_RESET, 
-				data.id);
-			update_ready_queue((void *) &(ss->args));
+			printf(ANSI_COLOR_GREEN "Package received - id: %d\n" ANSI_COLOR_RESET, data.id);
+			
+			FILE *audio_file = fopen("./a.mp3", "a");
+			fwrite(data.description, sizeof(char), sizeof(data_unit), audio_file);								
+			fclose(audio_file);
+
+			//update_ready_queue((void *) &(ss->args));
 			/* Play the track. */			
 			break;
 

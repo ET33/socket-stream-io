@@ -185,7 +185,7 @@ static void *process_ready_queue(void *vargs) {
 				temp_f = fopen(microaudio_filepath, "a");
 
 				// Write microaudio content on the selected file
-				fwrite(microaudio, sizeof(char), BUFFER_SIZE, temp_f);
+				fwrite(microaudio, sizeof(char), sizeof(data_unit), temp_f);
 
 				// Free system used memory
 				fclose(temp_f);
