@@ -4,6 +4,8 @@
 
 /* Process data send by the server. */
 void process_data(data_unit data, sound_struct *ss) {
+	FILE *audio_file;
+
 	/* Execute the required operation. */
 	switch(data.control_id) {		
 		case LIST:
@@ -11,18 +13,39 @@ void process_data(data_unit data, sound_struct *ss) {
 			break;
 
 		case START:
-			system("rm -rf ./a.mp3");
+			printf("Now Playing: %s\n", data.description);
+			audio_file = fopen("./b.mp3", "w");
+			if (!audio_file) {
+				printf("Could not delete the file\n");
+				return;
+			}
+			rewind(audio_file);
+			fclose(audio_file);
 			break;
 
 		case MUSIC:
 			printf(ANSI_COLOR_GREEN "Package received - id: %d\n" ANSI_COLOR_RESET, data.id);
 			//TEMP_CLIENT_DIR
-			FILE *audio_file = fopen("./a.mp3", "a");
+			audio_file = fopen("./b.mp3", "a");
+
+			if (!audio_file) {
+				printf("Could not open file\n");
+				return;
+			}
+
 			fwrite(data.description, sizeof(char), sizeof(data_unit), audio_file);								
 			fclose(audio_file);
 
 			// if(data.id == 0) {
-				// system("ffplay -loglevel panic -nodisp ./a.mp3");
+			// 	FILE *audio_file = fopen("./b.mp3", "rb");			
+			// 	if (!audio_file) {
+			// 		printf("Could not open file\n");
+			// 		return;
+			// 	}
+			// 	rewind(audio_file);
+			// 	fclose(audio_file);
+
+			// 	system("ffplay -loglevel panic -nodisp ./b.mp3");
 			// }
 
 			//update_ready_queue((void *) &(ss->args));
@@ -30,7 +53,14 @@ void process_data(data_unit data, sound_struct *ss) {
 			break;
 
 		case PLAY:
-			system("ffplay -loglevel panic -nodisp ./a.mp3");
+			audio_file = fopen("./b.mp3", "rb");			
+			if (!audio_file) {
+				printf("Could not open file\n");
+				return;
+			}
+			rewind(audio_file);
+			fclose(audio_file);
+			system("ffplay -loglevel panic -nodisp ./b.mp3");
 			//system("cvlc ./a.mp3");
 			break;
 
@@ -125,19 +155,18 @@ data_unit process_commands(data_unit msg) {
 
 void *recv_data(void *vargs) {
 	client_args_struct *args = (client_args_struct *) vargs;
+	data_unit data;
 
 	do {    	
 		/* Receiving data from the server. */
-		if (recv(args->client_socket->fd, &args->msg_recv, sizeof(data_unit), 0) == -1) {
-		    ERROR_EXIT(
-				ANSI_COLOR_RED 
-				"Error on receiving data from server\n" 
-				ANSI_COLOR_RESET);
+		if (recv(args->client_socket->fd, &data, sizeof(data_unit), 0) == -1) {
+		    ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from server\n" ANSI_COLOR_RESET);
 		} else {
-		    process_data(args->msg_recv, args->ss);
+			// printf("\nControl ID: %d\nPackage: %d\n", data.control_id, data.id);
+		    process_data(data, args->ss);
 		}
 		
-		if(args->msg_recv.control_id == EXIT) {
+		if(data.control_id == EXIT) {
 			args->process_end = 1;	
 			pthread_exit(NULL);
 		}
@@ -154,43 +183,29 @@ void *send_data(void *vargs) {
 	printf("Type " ANSI_COLOR_YELLOW "HELP" ANSI_COLOR_RESET " to see the command list.\n");
 	
 	do {   	           
-		if (args->msg_send.control_id != EXIT && 
-			args->msg_send.control_id != MESSAGE_NOANS) {
-			printf(
-				ANSI_COLOR_MAGENTA 
-				"Client response: " 
-				ANSI_COLOR_RESET);
+		if (args->msg_send.control_id != EXIT && args->msg_send.control_id != MESSAGE_NOANS) {
+			printf(ANSI_COLOR_MAGENTA "Client response: " ANSI_COLOR_RESET);
 		}
 
 		// Avoids buffer overflow
 		command = readline(stdin);	
+		*args->msg_send.description = '\0';
+		if (command) {
+			unsigned long int command_size = MIN(BUFFER_SIZE-1, strlen(command));
+		    strncpy(args->msg_send.description, command, command_size);
+		    args->msg_send.description[command_size] = '\0';
+		    free(command);
+		}
 
-                *args->msg_send.description = '\0';
-                if (command) {
-                                unsigned long int command_size = MIN(BUFFER_SIZE-1, strlen(command));
-                                strncpy(
-                                                args->msg_send.description,
-                                                command,
-                                                command_size);
-                                args->msg_send.description[command_size] = '\0';
-                                free(command);
-                }
-
-                if (*args->msg_send.description != '\0' &&
-                                strlen(args->msg_send.description) > 0) {
+		if (*args->msg_send.description != '\0' && strlen(args->msg_send.description) > 0) {
 			args->msg_send = process_commands(args->msg_send);
 		} else {
 			args->msg_send.control_id = INVALID;
 		}
 		
 		/* Sending data to the server. */
-		if (args->msg_send.control_id != INVALID && 
-			args->msg_send.control_id != HELP) {
-			send(
-				args->client_socket->fd, 
-				&args->msg_send, 
-				sizeof(data_unit), 
-				0);
+		if (args->msg_send.control_id != INVALID && args->msg_send.control_id != HELP) {
+			send(args->client_socket->fd, &args->msg_send, sizeof(data_unit), 0);
 		}
 
 		if (args->msg_send.control_id == EXIT) {
