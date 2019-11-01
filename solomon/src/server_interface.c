@@ -2,8 +2,8 @@
 #include "bytestream.h"
 #include "server_interface.h"
 
-file_units_struct *break_file(char *filepath) {
-	file_units_struct *messages = malloc(sizeof(file_units_struct));
+void break_file(void *vargs, char *filepath) {
+	server_args_struct *args = (server_args_struct *) vargs;
 	FILE *audio_file;
 	unsigned long long int fsize;
 
@@ -12,7 +12,7 @@ file_units_struct *break_file(char *filepath) {
 
 	if (!audio_file) {
 		printf("Could not open file\n");
-		return NULL;
+		return;
 	}
 
 	fseek(audio_file, 0, SEEK_END);
@@ -20,51 +20,55 @@ file_units_struct *break_file(char *filepath) {
 	rewind(audio_file);
 
 	unsigned int n_of_data_units = fsize / BUFFER_SIZE;
+
 	unsigned int data_unit_counter;
-	data_unit **msgs = malloc(sizeof(data_unit *) *
-		(n_of_data_units + 1));
+	data_unit **msgs = malloc(sizeof(data_unit *) * (n_of_data_units + 1));
+	printf(ANSI_COLOR_BLUE "Total of %u packages to be send to client...\n" ANSI_COLOR_RESET, n_of_data_units);
 
 	int bytes_read;
-
-	for (data_unit_counter = 0;
-		data_unit_counter <= n_of_data_units;
-		data_unit_counter++) {
-
+	
+	for (data_unit_counter = 0; data_unit_counter <= n_of_data_units; data_unit_counter++) {
 		msgs[data_unit_counter] = malloc(sizeof(data_unit));
+
+		if(data_unit_counter == 0) {
+			msgs[0]->control_id = START;
+			strcpy(msgs[0]->description, filepath);
+			send(args->client_socket, msgs[0], sizeof(data_unit), 0);
+		}
+
 		// 1 means 'one byte'
-		bytes_read = fread(msgs[data_unit_counter]->description,
-			1, BUFFER_SIZE, audio_file);
+		bytes_read = fread(msgs[data_unit_counter]->description, 1, BUFFER_SIZE, audio_file);
+		// send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);
 
 		if (bytes_read < BUFFER_SIZE)
 			msgs[data_unit_counter]->description[bytes_read] = '\0';		
-
 		msgs[data_unit_counter]->control_id = MUSIC;
 		msgs[data_unit_counter]->id = data_unit_counter;
+
+		sleep(1);
+		send(args->client_socket, msgs[data_unit_counter], sizeof(data_unit), 0);	
+		printf(ANSI_COLOR_GREEN "Package send - id %d\n" ANSI_COLOR_RESET, msgs[data_unit_counter]->id);	
 	}
+
 
 	fclose(audio_file);
 
-	messages->msgs = msgs;
-	messages->number_of_data_units = data_unit_counter;
-
-	return messages;
+	// msgs[0]->control_id = PLAY;
+	// send(args->client_socket, msgs[0], sizeof(data_unit), 0);
 }
 
 void *server_send_data_units(void *vargs) {
 	server_args_struct *args = (server_args_struct *) vargs;
 
-	char *teste = (char *) malloc(100);
-	sprintf(teste, "%s/%s", args->music_dir, "Spektrem - Shine [NCS Release].mp3");
+	char *music = (char *) malloc(100);
+	sprintf(music, "%s/%s", args->music_dir, "Spektrem - Shine [NCS Release].mp3");
+	//sprintf(music, "%s/%s", args->music_dir, "Cartoon - On & On (feat. Daniel Levi)  [NCS Release].mp3");
+	printf("%s\n", music);
 
-	file_units_struct *messages = break_file(teste);
+	break_file(args, music);
 
-	for (register unsigned int i = 0; i < messages->number_of_data_units; i++) {
-		send(
-			args->client_socket,
-			messages->msgs[i],
-			sizeof(data_unit),
-			0);
-	}
+	//for (register unsigned int i = 0; i < messages->number_of_data_units; i++)
+	//	send(args->client_socket, messages->msgs[i], sizeof(data_unit), 0);						
 
 	return NULL;
 }
@@ -139,58 +143,58 @@ void process_data(server_args_struct *args){
 	/* Execute the required operation. */
 	unsigned long int number_of_files;
 	char **list_of_files;
-	pthread_t send_data_thread;
+	//pthread_t send_data_thread;
+	char aux[10];
 
 	switch(args->msg_recv.control_id) {
 		case PLAY:
+			sleep(1);
 			strcpy(args->msg_send.description, "Playing...");
 			args->msg_send.control_id = MESSAGE;
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
-
-			pthread_create(
-				&send_data_thread,
-				NULL,
-				server_send_data_units,
-				(void *) args);
-
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);	
+			server_send_data_units((void *) args);
+			//pthread_create(&send_data_thread, NULL, server_send_data_units, (void *) args);
+			sleep(1);
+			args->msg_send.control_id = PLAY;
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);	
 			break;
 
 		case LIST:
-			list_of_files = get_file_list(
-				args->music_dir,
-				&number_of_files);
+			list_of_files = get_file_list(args->music_dir, &number_of_files);
 			strcpy(args->msg_send.description, "Music List:");
 			for (register unsigned int i = 0; i < number_of_files; i++) {
 				strcat(args->msg_send.description, "\n");
+				sprintf(aux, "[%d] ", i);
+				strcat(args->msg_send.description, aux);
 				strcat(args->msg_send.description, list_of_files[i]);
 			}
 			args->msg_send.control_id = MESSAGE;
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 
 		case STOP:
 			/* Para de enviar a música para o cliente. */
 			strcpy(args->msg_send.description, "Server stopped sending music.");
 			args->msg_send.control_id = MESSAGE;
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 
 		case EXIT:
 			strcpy(args->msg_send.description, "Thanks for using Theodora Music Stream!\n");
 			args->msg_send.control_id = MESSAGE_NOANS;
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			args->msg_send.control_id = EXIT;
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 
 		default:
-			if (strlen(args->msg_recv.description) > 1) {
+			if (strlen(args->msg_recv.description) > 0) {
 				strcpy(args->msg_send.description, "Invalid operation!");
 				args->msg_send.control_id = MESSAGE;
 			} else {
 				args->msg_send.control_id = INVALID;
 			}
-			// send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
+			send(args->client_socket, &args->msg_send, sizeof(data_unit), 0);
 			break;
 	}
 
@@ -202,15 +206,9 @@ void *server_recv_data(void *vargs) {
 	do {
 		/* Recebendo a msg do cliente. */
 		if (recv(args->client_socket, &args->msg_recv, sizeof(data_unit), 0) == -1)
-			ERROR_EXIT(
-				ANSI_COLOR_RED
-				"Error on receiving data from client"
-				ANSI_COLOR_RESET);
+			ERROR_EXIT(ANSI_COLOR_RED "Error on receiving data from client" ANSI_COLOR_RESET);
 		else {
-			if (args->msg_recv.control_id != INVALID) {
-				printf("id %d\ncontrol_id: %d\ndescription: %s\n", args->msg_recv.id, args->msg_recv.control_id, args->msg_recv.description);
-				process_data(args);
-			}
+			process_data(args);
 		}
 
 		if(args->msg_send.control_id == EXIT) {
@@ -228,12 +226,8 @@ void *server_send_data(void *vargs) {
 	char *command = NULL;
 
 	do {
-		if (args->msg_send.control_id != EXIT &&
-			args->msg_send.control_id != MESSAGE_NOANS) {
-			printf(
-				ANSI_COLOR_RED
-				"Server response: "
-				ANSI_COLOR_RESET);
+		if (args->msg_send.control_id != EXIT && args->msg_send.control_id != MESSAGE_NOANS) {
+			printf(ANSI_COLOR_RED "Server response: " ANSI_COLOR_RESET);
 		}
 
 		// Avoids buffer overflow
@@ -241,24 +235,19 @@ void *server_send_data(void *vargs) {
 		*args->msg_send.description = '\0';
 		if (command) {
 			unsigned long int command_size = MIN(BUFFER_SIZE-1, strlen(command));
-			strncpy(
-					args->msg_send.description,
-					command,
-					command_size);
+			strncpy(args->msg_send.description, command, command_size);
 			args->msg_send.description[command_size] = '\0';
 			free(command);
 		}
 
-		if (*args->msg_send.description != '\0' &&
-				strlen(args->msg_send.description) > 0) {
+		if (*args->msg_send.description != '\0' && strlen(args->msg_send.description) > 0) {
 				args->msg_send = process_commands(args->msg_send, args->music_dir);
 		} else {
 				args->msg_send.control_id = INVALID;
 		}
 
 		/* Enviando a msg_send para o cliente. */
-		if (args->msg_send.control_id != INVALID &&
-			args->msg_send.control_id != HELP)
+		if (args->msg_send.control_id != INVALID && args->msg_send.control_id != HELP)
 			send(args->client_socket, &args->msg_send, sizeof(args->msg_send), 0);
 
 		if (args->msg_send.control_id == EXIT) {

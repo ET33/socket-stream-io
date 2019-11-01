@@ -135,55 +135,6 @@ char **get_file_list(char *directory, unsigned long int *size) {
 }
 
 /*
-    This function tries to play
-    microaudios at the correct order.
-*/
-static void *play_microaudios(void *vargs) {
-    args_struct *args = (args_struct *) vargs;
-    int *process_end = args->process_end;
-    char *temp_dir_path = args->temp_dir_path;
-    const unsigned long int temp_dir_path_len = strlen(temp_dir_path);
-
-    char *command = NULL;
-    char **temp_dir_ls = NULL;
-    unsigned long int microaudio_counter = 0;
-
-    // Repeat til program process runs off
-    while (!(*process_end)) {
-        // Get file list from the temporary microaudio subdirectory
-        // already in the correct play order
-        temp_dir_ls = get_file_list(temp_dir_path, &microaudio_counter);
-
-        // For each microaudio file...
-        for (register unsigned long int i = 0; i < microaudio_counter; i++) {
-            // The full command is :
-            // "ffplay -loglevel panic -nodisp <temp_dir_path_len><temp_dir_ls[i]> && rm <temp_dir_path_len><temp_dir_ls[i]>"
-            command = malloc(sizeof(char) * (PLAY_MICROAUDIO_CMD_SIZE +
-                                             2 * (temp_dir_path_len + strlen(temp_dir_ls[i])) + 1));
-
-            // Concatenate "ffplay + rm " with complete microaudio filepath
-            // in command variable
-            sprintf(command, 
-                    "ffplay -loglevel panic -nodisp %s%s && rm %s%s", 
-                    temp_dir_path, temp_dir_ls[i], 
-                    temp_dir_path, temp_dir_ls[i]);
-
-            // Play sound on the given filepath
-            system(command);
-
-            // Free some memory allocated
-            free(command);
-            free(temp_dir_ls[i]);
-        }
-
-        // Free temp_dir_ls memory
-        free(temp_dir_ls);
-    }	
-
-    return NULL;
-}
-
-/*
     This function (invoked within a thread) has
     the task of processing the ready_q, creating
     temporary microaudio files.
@@ -226,15 +177,15 @@ static void *process_ready_queue(void *vargs) {
 
 				// Concatenate temp_dir_path and microaudio_counter
 				// on microaudio_filepath buffer
-				sprintf(microaudio_filepath, "%s%llu", 
-					temp_dir_path, microaudio_counter);
+				sprintf(microaudio_filepath, "%s%s", 
+					temp_dir_path, FINAL_FILE_NAME);
 
 				// If there's a microaudio, create a temporary
 				// microaudio file for it.
-				temp_f = fopen(microaudio_filepath, "w");
+				temp_f = fopen(microaudio_filepath, "a");
 
 				// Write microaudio content on the selected file
-				fwrite(microaudio, sizeof(char), BUFFER_SIZE, temp_f);
+				fwrite(microaudio, sizeof(char), sizeof(data_unit), temp_f);
 
 				// Free system used memory
 				fclose(temp_f);
@@ -253,12 +204,12 @@ static void *process_ready_queue(void *vargs) {
     task to fill the ready_q with the correct data
     blocks.
 */
-static void *update_ready_queue(void *vargs) {
+void *update_ready_queue(void *vargs) {
 
     args_struct *args = (args_struct *) vargs;
     queue *ready_q = args->ready_q;
     data_unit *cur_data_unit = args->cur_data_unit;
-    int *process_end = args->process_end;
+    //int *process_end = args->process_end;
     int key = 0;
 
     /*
@@ -266,16 +217,15 @@ static void *update_ready_queue(void *vargs) {
         appends the cur_data_unit and delivers
         the correct next data block to the ready_q.
     */
-    queue *aux_q = q_init();
+    queue *aux_q = args->aux_q;
 
     // Variable used to store the audio filepaths
     // given through the cur_data_unit inside the aux_q.
     char *bytestream_data = NULL;
 
     // Repeat til program process ends
-    while(!(*process_end)) {
-        if (cur_data_unit->control_id == MUSIC) {
-			printf("DEBUG: %d\n", cur_data_unit->id);	
+    //while(!(*process_end)) {
+        //if (cur_data_unit->control_id == MUSIC) {
             // It's necessary to transfer the content
             // of the cur_data_unit->description to
             // a dynamic memory region because the
@@ -289,13 +239,13 @@ static void *update_ready_queue(void *vargs) {
             
             // Expecting that "cur_data_unit"
             // isn't dinamically allocated.
-            cur_data_unit->control_id = INVALID;
+            // cur_data_unit->control_id = INVALID;
 
             // Caution: >>DON'T FREE<< bytestream_data!
             // Its dynamic memory region is
             // stored in the aux_q!
             bytestream_data = NULL;
-        }
+        //}
         
 
         // If there's something to process...
@@ -314,9 +264,9 @@ static void *update_ready_queue(void *vargs) {
                 q_insert(ready_q, key, bytestream_data);
             }
         }
-    }
+    //}
 
-    q_destroy(aux_q);
+    // q_destroy(aux_q);
     
     return NULL;
 }
@@ -346,10 +296,8 @@ void destroy_sound_struct (sound_struct *ss) {
     created to keep microaudios.
 */
 void create_temp_microaudio_dir(char *path) {
-    char inst[] = "mkdir -p ";
-    char *command = malloc(sizeof(char) * (strlen(path) + strlen(inst) + 1));
-    strcpy(command, inst);
-    strcat(command, path);
+    char *command = malloc(sizeof(char) * (2*strlen(path) + 17 + 1));
+    sprintf(command, "rm -r %s; mkdir -p %s", path, path);
     system(command);
     free(command);
 }
@@ -359,7 +307,7 @@ void create_temp_microaudio_dir(char *path) {
     created to keep microaudios.
 */
 void remove_temp_microaudio_dir(char *path) {
-    char inst[] = "rm -r ";
+    char inst[] = "rm -rf ";
     char *command = malloc(sizeof(char) * (strlen(path) + strlen(inst) + 1));
     strcpy(command, inst);
     strcat(command, path);
@@ -377,28 +325,16 @@ sound_struct *processSounds(data_unit *cur_data_unit, int *process_end, char *te
     // This struct will be used to pass
     // arguments to threads.
     ss->args.ready_q = q_init();
+    ss->args.aux_q = q_init();
     ss->args.cur_data_unit = cur_data_unit;
     ss->args.process_end = process_end;
     ss->args.temp_dir_path = temp_dir_path;
 
     // Create threads
     pthread_create(ss->thread_id + PROCESS_READY_QUEUE, NULL, process_ready_queue, (void *) &(ss->args));
-    pthread_create(ss->thread_id + UPDATE_READY_QUEUE, NULL, update_ready_queue, (void *) &(ss->args));
-
-    if (play_audio) {
-        // Should sounds be played as long as they received?
-        // This flag is supposed to be 0 (false) for the Server 
-        // and any other value (true) for every Client.
-        pthread_create(ss->thread_id + PLAY_MICROAUDIOS, NULL, play_microaudios, (void *) &(ss->args));
-    }
 
     pthread_detach((ss->thread_id)[PROCESS_READY_QUEUE]);
-    pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
-
-    if (play_audio) {
-        // Same discussion when creating PLAY_MICROAUDIOS thread.
-        pthread_detach((ss->thread_id)[PLAY_MICROAUDIOS]);
-    }
+    //pthread_detach((ss->thread_id)[UPDATE_READY_QUEUE]);
 
     return ss;
 }

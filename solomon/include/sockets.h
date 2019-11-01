@@ -45,7 +45,7 @@ correctly. */
 #include "data-struct-def.h"
 
 /* Function declaration section */
-socket_structure *create_socket(unsigned int buffer_size, unsigned short int port, int server_type, int protocol, char *ip_address, int op);
+socket_structure *create_socket(unsigned short int port, int server_type, int protocol, char *ip_address, int op);
 int attach_server(socket_structure *s, unsigned short int port);
 void connect_server(socket_structure * socket_struct, char *server_adress, char *port);
 void destroy_socket(socket_structure *s);
